@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "devops-agent-backend"
+version = "0.1.0"
+description = "Backend for DevOps Agent Platform (FastAPI-based)"
+authors = ["Your Team <devops@example.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.0"
+uvicorn = {extras = ["standard"], version = "^0.32.0"}
+httpx = "^0.27.0"
+python-dotenv = "^1.0.1"
+pydantic = "^2.9.0"
+pyyaml = "^6.0.2"
+google-generativeai = "^0.3.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.0"
+ruff = "^0.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
