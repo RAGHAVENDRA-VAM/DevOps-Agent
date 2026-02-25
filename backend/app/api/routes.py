@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, github, analysis, pipelines, metrics, security, infrastructure
+from app.api.v1 import auth, github, analysis, pipelines, metrics, security, infrastructure, builds
 
 router = APIRouter()
 
@@ -11,4 +11,5 @@ router.include_router(pipelines.router, prefix="/pipelines", tags=["pipelines"])
 router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 router.include_router(security.router, prefix="/security", tags=["security"])
 router.include_router(infrastructure.router, prefix="/infrastructure", tags=["infrastructure"])
+router.include_router(builds.router, prefix="/builds", tags=["builds"])
 

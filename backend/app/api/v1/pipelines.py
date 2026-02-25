@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Cookie, HTTPException
+import logging
 from pydantic import BaseModel
 import httpx
 import base64
@@ -15,22 +16,56 @@ from app.services.pipeline_monitor import (
 from app.services.ai_analyzer import analyze_pipeline_error
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class PipelinePreviewRequest(BaseModel):
+    repoFullName: str
+    branch: str
     tech: dict
     enableSast: bool = True
     enableDast: bool = True
 
 
 class PipelineCreateRequest(BaseModel):
+    repoFullName: str
+    branch: str
     tech: dict
     enableSast: bool = True
     enableDast: bool = True
 
 
-def _generate_pipeline_yaml(
-    repo_full_name: str, branch: str, tech: dict, enable_sast: bool, enable_dast: bool
+async def _find_build_file(repo_full_name: str, branch: str, gh_token: str, filename: str) -> str | None:
+    """Search for a build file in the repository recursively."""
+    async def search_dir(path: str, depth: int = 3) -> str | None:
+        if depth == 0:
+            return None
+        url = f"https://api.github.com/repos/{repo_full_name}/contents/{path}"
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.get(
+                url,
+                headers={
+                    "Accept": "application/vnd.github+json",
+                    "Authorization": f"Bearer {gh_token}",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+                params={"ref": branch},
+            )
+            if res.status_code == 200:
+                items = res.json()
+                for item in items:
+                    if item.get("name", "").lower() == filename.lower():
+                        return item.get("path", "")
+                    if item.get("type") == "dir":
+                        result = await search_dir(item.get("path", ""), depth - 1)
+                        if result:
+                            return result
+        return None
+    return await search_dir("", depth=3)
+
+
+async def _generate_pipeline_yaml(
+    repo_full_name: str, branch: str, tech: dict, enable_sast: bool, enable_dast: bool, gh_token: str
 ) -> str:
     """Generate GitHub Actions YAML based on detected technology."""
     language = tech.get("language", "python")
@@ -39,8 +74,17 @@ def _generate_pipeline_yaml(
 
     # Build steps based on language
     build_steps = []
+    artifact_path = ""
+    working_dir = ""
+    
     if language == "python":
+        artifact_path = "dist/"
+        # Find pyproject.toml or requirements.txt
         if build_tool == "poetry":
+            pyproject_path = await _find_build_file(repo_full_name, branch, gh_token, "pyproject.toml")
+            if pyproject_path and "/" in pyproject_path:
+                working_dir = pyproject_path.rsplit("/", 1)[0]
+                artifact_path = f"{working_dir}/dist/"
             build_steps = [
                 "- uses: actions/checkout@v4",
                 "- uses: actions/setup-python@v5",
@@ -49,34 +93,52 @@ def _generate_pipeline_yaml(
                 "- name: Install Poetry",
                 "  uses: snok/install-poetry@v1",
                 "- name: Install dependencies",
-                "  run: poetry install --no-interaction --no-ansi",
-                "- name: Run tests",
-                "  run: poetry run pytest",
+                f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}poetry install --no-interaction --no-ansi",
+                "- name: Build package",
+                f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}poetry build",
             ]
         else:
+            req_path = await _find_build_file(repo_full_name, branch, gh_token, "requirements.txt")
+            if req_path and "/" in req_path:
+                working_dir = req_path.rsplit("/", 1)[0]
+                artifact_path = f"{working_dir}/dist/"
             build_steps = [
                 "- uses: actions/checkout@v4",
                 "- uses: actions/setup-python@v5",
                 "  with:",
                 "    python-version: '3.11'",
                 "- name: Install dependencies",
-                "  run: pip install -r requirements.txt",
-                "- name: Run tests",
-                "  run: pytest",
+                f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}pip install -r requirements.txt",
+                "- name: Create distribution",
+                "  run: |",
+                f"    {'cd ' + working_dir if working_dir else 'pip install build'}",
+                f"    {'pip install build' if working_dir else 'python -m build'}",
+                f"    {'python -m build' if working_dir else ''}",
             ]
     elif language == "javascript":
+        artifact_path = "build/"
+        pkg_path = await _find_build_file(repo_full_name, branch, gh_token, "package.json")
+        if pkg_path and "/" in pkg_path:
+            working_dir = pkg_path.rsplit("/", 1)[0]
+            artifact_path = f"{working_dir}/build/"
         build_steps = [
             "- uses: actions/checkout@v4",
             "- uses: actions/setup-node@v4",
             "  with:",
             "    node-version: '20'",
             "- name: Install dependencies",
-            "  run: npm ci",
-            "- name: Run tests",
-            "  run: npm test",
+            f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}npm ci",
+            "- name: Build application",
+            f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}npm run build",
         ]
     elif language == "java":
         if build_tool == "maven":
+            pom_path = await _find_build_file(repo_full_name, branch, gh_token, "pom.xml")
+            if pom_path and "/" in pom_path:
+                working_dir = pom_path.rsplit("/", 1)[0]
+                artifact_path = f"{working_dir}/target/*.jar"
+            else:
+                artifact_path = "target/*.jar"
             build_steps = [
                 "- uses: actions/checkout@v4",
                 "- uses: actions/setup-java@v4",
@@ -84,9 +146,15 @@ def _generate_pipeline_yaml(
                 "    distribution: 'temurin'",
                 "    java-version: '17'",
                 "- name: Build with Maven",
-                "  run: mvn clean test",
+                f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}mvn clean package -DskipTests",
             ]
         else:  # gradle
+            gradle_path = await _find_build_file(repo_full_name, branch, gh_token, "build.gradle")
+            if gradle_path and "/" in gradle_path:
+                working_dir = gradle_path.rsplit("/", 1)[0]
+                artifact_path = f"{working_dir}/build/libs/*.jar"
+            else:
+                artifact_path = "build/libs/*.jar"
             build_steps = [
                 "- uses: actions/checkout@v4",
                 "- uses: actions/setup-java@v4",
@@ -94,17 +162,17 @@ def _generate_pipeline_yaml(
                 "    distribution: 'temurin'",
                 "    java-version: '17'",
                 "- name: Build with Gradle",
-                "  run: ./gradlew test",
+                f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}./gradlew build -x test",
             ]
     else:
-        # Generic fallback
+        artifact_path = "build/"
         build_steps = [
             "- uses: actions/checkout@v4",
-            "- name: Build and test",
+            "- name: Build application",
             "  run: echo 'Add build steps for your language'",
         ]
 
-    yaml_content = f"""name: CI/CD Pipeline
+    yaml_content = f"""name: CI Build Pipeline
 
 on:
   push:
@@ -113,55 +181,21 @@ on:
     branches: [{branch}]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
     steps:
 """
     for step in build_steps:
         yaml_content += f"      {step}\n"
-
-    if enable_sast:
-        yaml_content += """
-  sast-sonarqube:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@v2
-        env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: {repo_full_name.replace('/', '_')}
-"""
-
-    if tech.get("hasDockerfile"):
-        yaml_content += """
-  build-and-push:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build Docker image
-        run: docker build -t ${{ secrets.REGISTRY_URL }}/${{ github.repository }}:${{ github.sha }} .
-      - name: Push to registry
-        run: |
-          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login ${{ secrets.REGISTRY_URL }} -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
-          docker push ${{ secrets.REGISTRY_URL }}/${{ github.repository }}:${{ github.sha }}
-"""
-
-    if enable_dast:
-        yaml_content += """
-  dast-zap:
-    needs: build-and-push
-    if: success()
-    runs-on: ubuntu-latest
-    steps:
-      - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
+    
+    # Add artifact upload
+    yaml_content += f"""
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          target: ${{ secrets.APP_BASE_URL }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: build-artifact
+          path: {artifact_path}
+          retention-days: 30
 """
 
     return yaml_content
@@ -171,36 +205,22 @@ jobs:
 async def preview_pipeline(payload: PipelinePreviewRequest, gh_token: str | None = Cookie(default=None)):
     """
     Generate a GitHub Actions YAML preview based on tech and feature flags.
-    The repo and branch are determined from the user's selected repo (default branch).
     """
     if not gh_token:
         raise HTTPException(status_code=401, detail="Not authenticated with GitHub")
 
-    # Get user's selected repo (first in list for now)
-    async with httpx.AsyncClient(timeout=20) as client:
-        repos_res = await client.get(
-            "https://api.github.com/user/repos?per_page=100&sort=updated",
-            headers={
-                "Accept": "application/vnd.github+json",
-                "Authorization": f"Bearer {gh_token}",
-                "X-GitHub-Api-Version": "2022-11-28",
-            },
-        )
-        if repos_res.status_code != 200:
-            raise HTTPException(status_code=502, detail="Failed to fetch repositories from GitHub")
-        repos = repos_res.json()
-        if not repos:
-            raise HTTPException(status_code=404, detail="No repositories found for user")
-        repo = repos[0]  # Select the first repo (or implement selection logic as needed)
-        repo_full_name = repo["full_name"]
-        branch = repo["default_branch"]
+    # Use the repo and branch from the request payload
+    repo_full_name = payload.repoFullName
+    branch = payload.branch
+    logger.info("Generating preview for repo=%s branch=%s", repo_full_name, branch)
 
-    yaml_content = _generate_pipeline_yaml(
+    yaml_content = await _generate_pipeline_yaml(
         repo_full_name,
         branch,
         payload.tech,
         payload.enableSast,
         payload.enableDast,
+        gh_token,
     )
     return {"yaml": yaml_content}
 
@@ -215,92 +235,204 @@ async def create_pipeline(
     if not gh_token:
         raise HTTPException(status_code=401, detail="Not authenticated with GitHub")
 
-    # Get user's selected repo (first in list for now)
-    async with httpx.AsyncClient(timeout=20) as client:
-        repos_res = await client.get(
-            "https://api.github.com/user/repos?per_page=100&sort=updated",
-            headers={
-                "Accept": "application/vnd.github+json",
-                "Authorization": f"Bearer {gh_token}",
-                "X-GitHub-Api-Version": "2022-11-28",
-            },
-        )
-        if repos_res.status_code != 200:
-            raise HTTPException(status_code=502, detail="Failed to fetch repositories from GitHub")
-        repos = repos_res.json()
-        if not repos:
-            raise HTTPException(status_code=404, detail="No repositories found for user")
-        repo = repos[0]  # Select the first repo (or implement selection logic as needed)
-        repo_full_name = repo["full_name"]
-        branch = repo["default_branch"]
-
-    # Check if .github/workflows exists in the repo (list contents of .github/workflows)
-    async with httpx.AsyncClient(timeout=20) as client:
-        dir_url = f"https://api.github.com/repos/{repo_full_name}/contents/.github/workflows?ref={branch}"
-        dir_res = await client.get(
-            dir_url,
-            headers={
-                "Accept": "application/vnd.github+json",
-                "Authorization": f"Bearer {gh_token}",
-                "X-GitHub-Api-Version": "2022-11-28",
-            },
-        )
-        if dir_res.status_code == 404:
-            # Directory does not exist, create a .gitkeep file to force directory creation
-            create_gitkeep_url = f"https://api.github.com/repos/{repo_full_name}/contents/.github/workflows/.gitkeep"
-            encoded_gitkeep = base64.b64encode(b"").decode("utf-8")
-            put_gitkeep = await client.put(
-                create_gitkeep_url,
+    # Use the repo and branch from the request payload
+    repo_full_name = payload.repoFullName
+    branch = payload.branch
+    logger.info("Creating pipeline in repo=%s branch=%s", repo_full_name, branch)
+    logger.info("Tech payload: %s", payload.tech)
+    
+    # Check token permissions first
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            # Check user permissions on the repo
+            perm_url = f"https://api.github.com/repos/{repo_full_name}"
+            perm_res = await client.get(
+                perm_url,
                 headers={
                     "Accept": "application/vnd.github+json",
                     "Authorization": f"Bearer {gh_token}",
                     "X-GitHub-Api-Version": "2022-11-28",
                 },
-                json={
-                    "message": "chore: create .github/workflows directory",
-                    "content": encoded_gitkeep,
-                    "branch": branch
+            )
+            if perm_res.status_code == 200:
+                repo_data = perm_res.json()
+                permissions = repo_data.get("permissions", {})
+                logger.info("Repository permissions: %s", permissions)
+                
+                if not permissions.get("push", False):
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"You don't have write access to '{repo_full_name}'. Please make sure you're the owner or have push access."
+                    )
+            else:
+                logger.error("Failed to check permissions: %s", perm_res.text)
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Repository '{repo_full_name}' not found or you don't have access"
+                )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error checking permissions: %s", e)
+        raise HTTPException(status_code=500, detail=f"Error checking permissions: {str(e)}")
+    
+    # Verify the repository and branch exist
+    repo_data = None
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            repo_url = f"https://api.github.com/repos/{repo_full_name}"
+            logger.info("Verifying repository: %s", repo_url)
+            repo_res = await client.get(
+                repo_url,
+                headers={
+                    "Accept": "application/vnd.github+json",
+                    "Authorization": f"Bearer {gh_token}",
+                    "X-GitHub-Api-Version": "2022-11-28",
                 },
             )
-            if put_gitkeep.status_code not in [200, 201]:
+            if repo_res.status_code != 200:
+                logger.error("Repository not found or no access: %s", repo_res.text)
                 raise HTTPException(
-                    status_code=502, detail=f"Failed to create .github/workflows directory: {put_gitkeep.text}"
+                    status_code=404, 
+                    detail=f"Repository '{repo_full_name}' not found or you don't have access to it"
                 )
+            repo_data = repo_res.json()
+            default_branch = repo_data.get("default_branch", "main")
+            logger.info("Repository default branch: %s, requested branch: %s", default_branch, branch)
+            
+            # If requested branch is not the default, use default branch instead
+            if branch != default_branch:
+                logger.warning("Requested branch '%s' is not default branch '%s'. Using default branch.", branch, default_branch)
+                branch = default_branch
+            
+            # Verify branch exists
+            branch_url = f"https://api.github.com/repos/{repo_full_name}/branches/{branch}"
+            logger.info("Verifying branch: %s", branch_url)
+            branch_res = await client.get(
+                branch_url,
+                headers={
+                    "Accept": "application/vnd.github+json",
+                    "Authorization": f"Bearer {gh_token}",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+            )
+            if branch_res.status_code != 200:
+                logger.error("Branch not found: %s", branch_res.text)
+                raise HTTPException(
+                    status_code=404, 
+                    detail=f"Branch '{branch}' not found in repository '{repo_full_name}'"
+                )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error verifying repository/branch: %s", e)
+        raise HTTPException(status_code=500, detail=f"Error verifying repository: {str(e)}")
 
     # Generate YAML
-    yaml_content = _generate_pipeline_yaml(
-        repo_full_name, branch, payload.tech, payload.enableSast, payload.enableDast
+    yaml_content = await _generate_pipeline_yaml(
+        repo_full_name, branch, payload.tech, payload.enableSast, payload.enableDast, gh_token
     )
 
-    # Use GitHub's contents API for workflow file creation (simpler and more reliable)
+    # Use GitHub's contents API for workflow file creation
     contents_url = f"https://api.github.com/repos/{repo_full_name}/contents/.github/workflows/ci.yml"
+    logger.info("Uploading workflow to: %s", contents_url)
     encoded_content = base64.b64encode(yaml_content.encode("utf-8")).decode("utf-8")
-    async with httpx.AsyncClient(timeout=20) as client:
-        put_res = await client.put(
-            contents_url,
-            headers={
-                "Accept": "application/vnd.github+json",
-                "Authorization": f"Bearer {gh_token}",
-                "X-GitHub-Api-Version": "2022-11-28",
-            },
-            json={
-                "message": "chore: add CI/CD pipeline via DevOps Agent",
-                "content": encoded_content,
-                "branch": branch
-            },
-        )
-        if put_res.status_code not in [200, 201]:
-            raise HTTPException(
-                status_code=502, detail=f"Failed to create or update workflow file: {put_res.text}"
-            )
-        result = put_res.json()
-    return {
-        "status": "created",
-        "repo": repo_full_name,
-        "branch": branch,
-        "workflow_path": ".github/workflows/ci.yml",
-        "commit_sha": result.get("commit", {}).get("sha", "")
-    }
+    
+    # Retry logic for handling SHA conflicts
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            async with httpx.AsyncClient(timeout=20) as client:
+                # Get the latest file SHA each time to avoid conflicts
+                get_res = await client.get(
+                    contents_url,
+                    headers={
+                        "Accept": "application/vnd.github+json",
+                        "Authorization": f"Bearer {gh_token}",
+                        "X-GitHub-Api-Version": "2022-11-28",
+                    },
+                    params={"ref": branch}
+                )
+                
+                file_sha = None
+                if get_res.status_code == 200:
+                    # File exists, get its SHA for update
+                    file_sha = get_res.json().get("sha")
+                    logger.info("Attempt %d: File exists, will update with SHA: %s", attempt + 1, file_sha)
+                else:
+                    logger.info("Attempt %d: File doesn't exist, will create new", attempt + 1)
+                
+                # Prepare the request body
+                request_body = {
+                    "message": "chore: add CI/CD pipeline via DevOps Agent",
+                    "content": encoded_content
+                }
+                if file_sha:
+                    request_body["sha"] = file_sha
+                
+                put_res = await client.put(
+                    contents_url,
+                    headers={
+                        "Accept": "application/vnd.github+json",
+                        "Authorization": f"Bearer {gh_token}",
+                        "X-GitHub-Api-Version": "2022-11-28",
+                    },
+                    json=request_body,
+                )
+
+                if put_res.status_code in [200, 201]:
+                    result = put_res.json()
+                    logger.info("Successfully created/updated workflow file on attempt %d", attempt + 1)
+                    return {
+                        "status": "created",
+                        "repo": repo_full_name,
+                        "branch": branch,
+                        "workflow_path": ".github/workflows/ci.yml",
+                        "commit_sha": result.get("commit", {}).get("sha", "")
+                    }
+                elif put_res.status_code == 409:
+                    # SHA conflict - retry with fresh SHA
+                    logger.warning("Attempt %d: SHA conflict (409), retrying...", attempt + 1)
+                    if attempt < max_retries - 1:
+                        import asyncio
+                        await asyncio.sleep(0.5)  # Brief delay before retry
+                        continue
+                    else:
+                        raise HTTPException(
+                            status_code=409,
+                            detail="File was modified by another process. Please try again."
+                        )
+                else:
+                    error_detail = put_res.text
+                    logger.error(
+                        "Commit failed on attempt %d: status=%s, body=%s",
+                        attempt + 1,
+                        put_res.status_code,
+                        error_detail,
+                    )
+                    
+                    # Parse error message for better user feedback
+                    try:
+                        error_json = put_res.json()
+                        error_msg = error_json.get("message", error_detail)
+                    except:
+                        error_msg = error_detail
+                        
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"GitHub API error: {error_msg}. Make sure you have write access to the repository."
+                    )
+        except HTTPException:
+            raise
+        except Exception as e:
+            if attempt < max_retries - 1:
+                logger.warning("Attempt %d failed with error: %s, retrying...", attempt + 1, str(e))
+                import asyncio
+                await asyncio.sleep(0.5)
+                continue
+            else:
+                logger.exception("All attempts failed: %s", e)
+                raise HTTPException(status_code=500, detail=f"Failed after {max_retries} attempts: {str(e)}")
 
 
 @router.get("/failed")

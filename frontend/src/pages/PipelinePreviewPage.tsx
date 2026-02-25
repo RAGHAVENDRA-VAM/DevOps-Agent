@@ -39,6 +39,7 @@ export const PipelinePreviewPage: React.FC = () => {
     await createPipeline({
       repoFullName: fullName,
       branch,
+      tech: JSON.parse(tech),
       enableSast,
       enableDast
     });

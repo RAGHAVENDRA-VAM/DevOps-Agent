@@ -20,7 +20,7 @@ async def github_oauth_start():
         raise HTTPException(status_code=503, detail="GitHub OAuth not configured")
 
     redirect_uri = os.getenv("GITHUB_OAUTH_CALLBACK_URL", "")
-    params = f"client_id={client_id}&redirect_uri={redirect_uri}&scope=repo%20read:user"
+    params = f"client_id={client_id}&redirect_uri={redirect_uri}&scope=repo%20workflow%20read:user"
     url = f"https://github.com/login/oauth/authorize?{params}"
     return RedirectResponse(url)
 
