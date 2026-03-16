@@ -27,8 +27,12 @@ export const TechDetectionPage: React.FC = () => {
   const [tech, setTech] = useState<TechDetection | null>(null);
   const [status, setStatus] = useState<'detecting' | 'creating' | 'done' | 'error'>('detecting');
   const [error, setError] = useState<string | null>(null);
+  const hasCreatedPipeline = React.useRef(false);
 
   useEffect(() => {
+    // Prevent duplicate execution
+    if (hasCreatedPipeline.current) return;
+    
     const selected = sessionStorage.getItem('selectedRepo');
     if (!selected) {
       navigate('/repos');
@@ -45,6 +49,7 @@ export const TechDetectionPage: React.FC = () => {
 
         // Step 2: Auto-create pipeline immediately
         try {
+          hasCreatedPipeline.current = true; // Mark as created
           await createPipeline({
             repoFullName: fullName,
             branch,
