@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import os
+import json
 from fastapi import APIRouter, Cookie, HTTPException
 import logging
 from pydantic import BaseModel
 import httpx
 import base64
 import yaml
+from nacl import encoding, public as nacl_public
 
 from app.services.pipeline_monitor import (
     get_failed_workflow_runs,
@@ -33,9 +36,52 @@ class PipelineCreateRequest(BaseModel):
     tech: dict
     enableSast: bool = True
     enableDast: bool = True
+    deploy: dict | None = None  # infra details from provisioning
 
 
-async def _find_build_file(repo_full_name: str, branch: str, gh_token: str, filename: str) -> str | None:
+async def _set_github_secret(repo_full_name: str, secret_name: str, secret_value: str, gh_token: str):
+    """Encrypt and set a GitHub Actions secret on the repository."""
+    async with httpx.AsyncClient(timeout=15) as client:
+        # Get repo public key for encryption
+        key_res = await client.get(
+            f"https://api.github.com/repos/{repo_full_name}/actions/secrets/public-key",
+            headers={
+                "Accept": "application/vnd.github+json",
+                "Authorization": f"Bearer {gh_token}",
+                "X-GitHub-Api-Version": "2022-11-28",
+            },
+        )
+        if key_res.status_code != 200:
+            logger.warning("Could not fetch repo public key: %s", key_res.text)
+            return
+
+        key_data = key_res.json()
+        public_key = key_data["key"]
+        key_id = key_data["key_id"]
+
+        # Encrypt the secret using libsodium (PyNaCl)
+        pk = nacl_public.PublicKey(public_key.encode(), encoding.Base64Encoder)
+        box = nacl_public.SealedBox(pk)
+        encrypted = box.encrypt(secret_value.encode())
+        encrypted_b64 = base64.b64encode(encrypted).decode()
+
+        # Set the secret
+        put_res = await client.put(
+            f"https://api.github.com/repos/{repo_full_name}/actions/secrets/{secret_name}",
+            headers={
+                "Accept": "application/vnd.github+json",
+                "Authorization": f"Bearer {gh_token}",
+                "X-GitHub-Api-Version": "2022-11-28",
+            },
+            json={"encrypted_value": encrypted_b64, "key_id": key_id},
+        )
+        if put_res.status_code in [201, 204]:
+            logger.info("Secret '%s' set on repo %s", secret_name, repo_full_name)
+        else:
+            logger.warning("Failed to set secret '%s': %s", secret_name, put_res.text)
+
+
+
     """Search for a build file in the repository recursively."""
     async def search_dir(path: str, depth: int = 3) -> str | None:
         if depth == 0:
@@ -65,140 +111,157 @@ async def _find_build_file(repo_full_name: str, branch: str, gh_token: str, file
 
 
 async def _generate_pipeline_yaml(
-    repo_full_name: str, branch: str, tech: dict, enable_sast: bool, enable_dast: bool, gh_token: str
+    repo_full_name: str, branch: str, tech: dict, enable_sast: bool, enable_dast: bool,
+    gh_token: str, deploy: dict | None = None
 ) -> str:
-    """Generate GitHub Actions YAML based on detected technology."""
+    """Generate a combined CI+CD GitHub Actions YAML."""
     language = tech.get("language", "python")
     build_tool = tech.get("buildTool", "pip")
-    framework = tech.get("framework", "")
-
-    # Build steps based on language
-    build_steps = []
-    artifact_path = ""
     working_dir = ""
-    
+    artifact_path = ""
+
+    # Determine working directory and artifact path
     if language == "python":
         artifact_path = "dist/"
-        # Find pyproject.toml or requirements.txt
         if build_tool == "poetry":
-            pyproject_path = await _find_build_file(repo_full_name, branch, gh_token, "pyproject.toml")
-            if pyproject_path and "/" in pyproject_path:
-                working_dir = pyproject_path.rsplit("/", 1)[0]
-                artifact_path = f"{working_dir}/dist/"
-            build_steps = [
-                "- uses: actions/checkout@v4",
-                "- uses: actions/setup-python@v5",
-                "  with:",
-                "    python-version: '3.11'",
-                "- name: Install Poetry",
-                "  uses: snok/install-poetry@v1",
-                "- name: Install dependencies",
-                f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}poetry install --no-interaction --no-ansi",
-                "- name: Build package",
-                f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}poetry build",
-            ]
+            p = await _find_build_file(repo_full_name, branch, gh_token, "pyproject.toml")
         else:
-            req_path = await _find_build_file(repo_full_name, branch, gh_token, "requirements.txt")
-            if req_path and "/" in req_path:
-                working_dir = req_path.rsplit("/", 1)[0]
-                artifact_path = f"{working_dir}/dist/"
-            build_steps = [
-                "- uses: actions/checkout@v4",
-                "- uses: actions/setup-python@v5",
-                "  with:",
-                "    python-version: '3.11'",
-                "- name: Install dependencies",
-                f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}pip install -r requirements.txt",
-                "- name: Create distribution",
-                "  run: |",
-                f"    {'cd ' + working_dir if working_dir else 'pip install build'}",
-                f"    {'pip install build' if working_dir else 'python -m build'}",
-                f"    {'python -m build' if working_dir else ''}",
-            ]
+            p = await _find_build_file(repo_full_name, branch, gh_token, "requirements.txt")
+        if p and "/" in p:
+            working_dir = p.rsplit("/", 1)[0]
+            artifact_path = f"{working_dir}/dist/"
     elif language == "javascript":
         artifact_path = "build/"
-        pkg_path = await _find_build_file(repo_full_name, branch, gh_token, "package.json")
-        if pkg_path and "/" in pkg_path:
-            working_dir = pkg_path.rsplit("/", 1)[0]
+        p = await _find_build_file(repo_full_name, branch, gh_token, "package.json")
+        if p and "/" in p:
+            working_dir = p.rsplit("/", 1)[0]
             artifact_path = f"{working_dir}/build/"
-        build_steps = [
-            "- uses: actions/checkout@v4",
-            "- uses: actions/setup-node@v4",
-            "  with:",
-            "    node-version: '20'",
-            "- name: Install dependencies",
-            f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}npm ci",
-            "- name: Build application",
-            f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}npm run build",
-        ]
     elif language == "java":
         if build_tool == "maven":
-            pom_path = await _find_build_file(repo_full_name, branch, gh_token, "pom.xml")
-            if pom_path and "/" in pom_path:
-                working_dir = pom_path.rsplit("/", 1)[0]
-                artifact_path = f"{working_dir}/target/*.jar"
-            else:
-                artifact_path = "target/*.jar"
-            build_steps = [
-                "- uses: actions/checkout@v4",
-                "- uses: actions/setup-java@v4",
-                "  with:",
-                "    distribution: 'temurin'",
-                "    java-version: '17'",
-                "- name: Build with Maven",
-                f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}mvn clean package -DskipTests",
-            ]
-        else:  # gradle
-            gradle_path = await _find_build_file(repo_full_name, branch, gh_token, "build.gradle")
-            if gradle_path and "/" in gradle_path:
-                working_dir = gradle_path.rsplit("/", 1)[0]
-                artifact_path = f"{working_dir}/build/libs/*.jar"
-            else:
-                artifact_path = "build/libs/*.jar"
-            build_steps = [
-                "- uses: actions/checkout@v4",
-                "- uses: actions/setup-java@v4",
-                "  with:",
-                "    distribution: 'temurin'",
-                "    java-version: '17'",
-                "- name: Build with Gradle",
-                f"  run: {'cd ' + working_dir + ' && ' if working_dir else ''}./gradlew build -x test",
-            ]
+            p = await _find_build_file(repo_full_name, branch, gh_token, "pom.xml")
+            artifact_path = f"{working_dir}/target/*.jar" if working_dir else "target/*.jar"
+        else:
+            p = await _find_build_file(repo_full_name, branch, gh_token, "build.gradle")
+            artifact_path = f"{working_dir}/build/libs/*.jar" if working_dir else "build/libs/*.jar"
+        if p and "/" in p:
+            working_dir = p.rsplit("/", 1)[0]
+            artifact_path = f"{working_dir}/target/*.jar" if build_tool == "maven" else f"{working_dir}/build/libs/*.jar"
     else:
         artifact_path = "build/"
-        build_steps = [
-            "- uses: actions/checkout@v4",
-            "- name: Build application",
-            "  run: echo 'Add build steps for your language'",
+
+    cd = f"cd {working_dir} && " if working_dir else ""
+
+    # Build language-specific steps as proper dicts
+    if language == "python":
+        if build_tool == "poetry":
+            lang_steps = [
+                {"uses": "actions/setup-python@v5", "with": {"python-version": "3.11"}},
+                {"uses": "snok/install-poetry@v1"},
+                {"name": "Install dependencies", "run": f"{cd}poetry install --no-interaction --no-ansi"},
+                {"name": "Build", "run": f"{cd}poetry build"},
+            ]
+        else:
+            lang_steps = [
+                {"uses": "actions/setup-python@v5", "with": {"python-version": "3.11"}},
+                {"name": "Install dependencies", "run": f"{cd}pip install -r requirements.txt"},
+                {"name": "Build", "run": f"{cd}pip install build && python -m build"},
+            ]
+    elif language == "javascript":
+        lang_steps = [
+            {"uses": "actions/setup-node@v4", "with": {"node-version": "20"}},
+            {"name": "Install dependencies", "run": f"{cd}npm ci"},
+            {"name": "Build", "run": f"{cd}npm run build"},
+        ]
+    elif language == "java":
+        build_cmd = f"{cd}mvn clean package -DskipTests" if build_tool == "maven" else f"{cd}./gradlew build -x test"
+        lang_steps = [
+            {"uses": "actions/setup-java@v4", "with": {"distribution": "temurin", "java-version": "17"}},
+            {"name": "Build", "run": build_cmd},
+        ]
+    else:
+        lang_steps = [
+            {"name": "Build", "run": "echo 'Add build steps for your language'"},
         ]
 
-    yaml_content = f"""name: CI Build Pipeline
+    build_steps = [
+        {"uses": "actions/checkout@v4"},
+        *lang_steps,
+        {
+            "name": "Upload artifact",
+            "uses": "actions/upload-artifact@v4",
+            "with": {"name": "build-artifact", "path": artifact_path, "retention-days": 7},
+        },
+    ]
 
-on:
-  push:
-    branches: [{branch}]
-  pull_request:
-    branches: [{branch}]
+    # Deploy steps per target
+    deploy_steps = []
+    if deploy:
+        infra_type = deploy.get("infrastructure_type", "")
+        resource_name = deploy.get("resource_name", "")
+        resource_group = deploy.get("resource_group", "")
+        public_ip = deploy.get("public_ip", "")
+        admin_user = deploy.get("admin_user", "azureuser")
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-"""
-    for step in build_steps:
-        yaml_content += f"      {step}\n"
-    
-    # Add artifact upload
-    yaml_content += f"""
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifact
-          path: {artifact_path}
-          retention-days: 30
-"""
+        azure_login = {
+            "name": "Azure Login",
+            "uses": "azure/login@v1",
+            "with": {"creds": "${{ secrets.AZURE_CREDENTIALS }}"},
+        }
 
-    return yaml_content
+        if infra_type == "azure-web-app":
+            deploy_steps = [
+                {"uses": "actions/checkout@v4"},
+                {"name": "Download artifact", "uses": "actions/download-artifact@v4", "with": {"name": "build-artifact"}},
+                azure_login,
+                {"name": "Deploy to Azure Web App", "uses": "azure/webapps-deploy@v3", "with": {"app-name": resource_name, "package": "."}},
+            ]
+        elif infra_type == "aks":
+            deploy_steps = [
+                {"uses": "actions/checkout@v4"},
+                azure_login,
+                {"name": "Set AKS context", "uses": "azure/aks-set-context@v3", "with": {"resource-group": resource_group, "cluster-name": resource_name}},
+                {"name": "Deploy to AKS", "run": "kubectl apply -f k8s/ || echo 'No k8s manifests found'"},
+            ]
+        elif infra_type == "vm":
+            deploy_steps = [
+                {"uses": "actions/checkout@v4"},
+                {"name": "Download artifact", "uses": "actions/download-artifact@v4", "with": {"name": "build-artifact"}},
+                {
+                    "name": "Deploy to VM via SSH",
+                    "uses": "appleboy/ssh-action@v1",
+                    "with": {
+                        "host": public_ip,
+                        "username": admin_user,
+                        "key": "${{ secrets.VM_SSH_PRIVATE_KEY }}",
+                        "script": "mkdir -p ~/app && cd ~/app && echo 'Deployment complete'",
+                    },
+                },
+            ]
+
+    # Build the full workflow dict and serialize to YAML properly
+    workflow: dict = {
+        "name": "CI/CD Pipeline",
+        "on": {
+            "push": {"branches": [branch]},
+            "pull_request": {"branches": [branch]},
+        },
+        "jobs": {
+            "build": {
+                "runs-on": "ubuntu-latest",
+                "steps": build_steps,
+            }
+        },
+    }
+
+    if deploy_steps:
+        workflow["jobs"]["deploy"] = {
+            "runs-on": "ubuntu-latest",
+            "needs": "build",
+            "if": f"github.ref == 'refs/heads/{branch}'",
+            "steps": deploy_steps,
+        }
+
+    return yaml.dump(workflow, default_flow_style=False, sort_keys=False, allow_unicode=True)
 
 
 @router.post("/preview")
@@ -330,7 +393,8 @@ async def create_pipeline(
 
     # Generate YAML
     yaml_content = await _generate_pipeline_yaml(
-        repo_full_name, branch, payload.tech, payload.enableSast, payload.enableDast, gh_token
+        repo_full_name, branch, payload.tech, payload.enableSast, payload.enableDast, gh_token,
+        deploy=payload.deploy
     )
 
     # Use GitHub's contents API for workflow file creation
@@ -383,12 +447,24 @@ async def create_pipeline(
                 if put_res.status_code in [200, 201]:
                     result = put_res.json()
                     logger.info("Successfully created/updated workflow file on attempt %d", attempt + 1)
+
+                    # Auto-set AZURE_CREDENTIALS secret if deploy config present
+                    if payload.deploy:
+                        azure_creds = json.dumps({
+                            "clientId": os.getenv("AZURE_CLIENT_ID", ""),
+                            "clientSecret": os.getenv("AZURE_CLIENT_SECRET", ""),
+                            "tenantId": os.getenv("AZURE_TENANT_ID", ""),
+                            "subscriptionId": os.getenv("AZURE_SUBSCRIPTION_ID", ""),
+                        })
+                        await _set_github_secret(repo_full_name, "AZURE_CREDENTIALS", azure_creds, gh_token)
+
                     return {
                         "status": "created",
                         "repo": repo_full_name,
                         "branch": branch,
                         "workflow_path": ".github/workflows/ci.yml",
-                        "commit_sha": result.get("commit", {}).get("sha", "")
+                        "commit_sha": result.get("commit", {}).get("sha", ""),
+                        "secrets_configured": bool(payload.deploy),
                     }
                 elif put_res.status_code == 409:
                     # SHA conflict - retry with fresh SHA

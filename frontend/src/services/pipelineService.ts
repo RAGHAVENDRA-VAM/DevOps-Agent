@@ -14,6 +14,7 @@ interface PipelineCreateRequest {
   tech: unknown;
   enableSast: boolean;
   enableDast: boolean;
+  deploy?: unknown;  // infra result to include deploy job in YAML
 }
 
 export const generatePipelinePreview = async (payload: PipelinePreviewRequest) => {
