@@ -1,0 +1,110 @@
+/* RepoSelectionPage.css */
+
+.repo-root {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0e1a 0%, #0d1b2a 100%);
+  padding: 32px;
+}
+
+.repo-header {
+  margin-bottom: 32px;
+}
+
+.repo-title {
+  font-weight: 700 !important;
+  color: #e2e8f0 !important;
+}
+
+.repo-subtitle {
+  color: rgba(148,163,184,0.7) !important;
+}
+
+/* Search bar */
+.repo-search .MuiOutlinedInput-root {
+  color: #e2e8f0;
+  background: rgba(255,255,255,0.04);
+}
+.repo-search .MuiOutlinedInput-root fieldset { border-color: rgba(99,179,237,0.2); }
+.repo-search .MuiOutlinedInput-root:hover fieldset { border-color: rgba(99,179,237,0.4); }
+.repo-search .MuiOutlinedInput-root.Mui-focused fieldset { border-color: #63b3ed; }
+.repo-search input::placeholder { color: rgba(148,163,184,0.4); }
+
+/* Count chip */
+.repo-count-chip {
+  background: rgba(99,179,237,0.1) !important;
+  color: #63b3ed !important;
+  border: 1px solid rgba(99,179,237,0.2) !important;
+}
+
+/* Grid */
+.repo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  max-height: calc(100vh - 260px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.repo-grid::-webkit-scrollbar { width: 6px; }
+.repo-grid::-webkit-scrollbar-track { background: transparent; }
+.repo-grid::-webkit-scrollbar-thumb { background: rgba(99,179,237,0.3); border-radius: 3px; }
+
+/* Repo card */
+.repo-card {
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(99,179,237,0.12);
+  background: rgba(13,25,48,0.8);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+.repo-card:hover {
+  border-color: rgba(99,179,237,0.4);
+  background: rgba(99,179,237,0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+.repo-card.selected {
+  border-color: rgba(99,179,237,0.6);
+  background: rgba(99,179,237,0.08);
+}
+
+/* Repo avatar */
+.repo-avatar {
+  background: rgba(99,179,237,0.1) !important;
+  width: 36px !important;
+  height: 36px !important;
+}
+
+/* Language dot */
+.repo-lang-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Private / Public chip */
+.repo-badge-public {
+  height: 18px !important;
+  font-size: 10px !important;
+  background: rgba(16,185,129,0.1) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16,185,129,0.2) !important;
+}
+.repo-badge-private {
+  height: 18px !important;
+  font-size: 10px !important;
+  background: rgba(239,68,68,0.1) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239,68,68,0.2) !important;
+}
+
+/* Empty state */
+.repo-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 64px 0;
+  color: rgba(148,163,184,0.5);
+}

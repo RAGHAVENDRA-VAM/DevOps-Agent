@@ -1,0 +1,324 @@
+import React, { useEffect, useState } from 'react';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import type { AxiosError } from 'axios';
+import { httpClient } from '../services/httpClient';
+import '../styles/DashboardPages.css';
+
+// ---------------------------------------------------------------------------
+// Types matching backend Pydantic models
+// ---------------------------------------------------------------------------
+
+type SastSeverity = 'BLOCKER' | 'CRITICAL' | 'MAJOR' | 'MINOR' | 'INFO';
+type QualityGate  = 'OK' | 'WARN' | 'ERROR' | 'NONE';
+type ZapRisk      = 'High' | 'Medium' | 'Low' | 'Informational';
+
+interface SastIssue {
+  key: string;
+  severity: SastSeverity;
+  message: string;
+  component: string;
+  line: number | null;
+  rule: string;
+}
+
+interface SastResponse {
+  issues: SastIssue[];
+  quality_gate: QualityGate;
+  total_issues: number;
+  sonar_url: string | null;
+}
+
+interface ZapAlert {
+  alert: string;
+  risk: ZapRisk;
+  description: string;
+  solution: string;
+  url: string;
+  cweid: string | null;
+}
+
+interface DastResponse {
+  alerts: ZapAlert[];
+  total_alerts: number;
+  high_risk: number;
+  medium_risk: number;
+  low_risk: number;
+  zap_url: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const SEVERITY_STYLE: Record<SastSeverity, { color: string; bg: string }> = {
+  BLOCKER:  { color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
+  CRITICAL: { color: '#fb923c', bg: 'rgba(251,146,60,0.12)'  },
+  MAJOR:    { color: '#fbbf24', bg: 'rgba(251,191,36,0.12)'  },
+  MINOR:    { color: '#63b3ed', bg: 'rgba(99,179,237,0.12)'  },
+  INFO:     { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)'  },
+};
+
+const RISK_STYLE: Record<ZapRisk, { color: string; bg: string }> = {
+  High:          { color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
+  Medium:        { color: '#fbbf24', bg: 'rgba(251,191,36,0.12)'  },
+  Low:           { color: '#63b3ed', bg: 'rgba(99,179,237,0.12)'  },
+  Informational: { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)'  },
+};
+
+const QG_STYLE: Record<QualityGate, { color: string; label: string }> = {
+  OK:   { color: '#34d399', label: 'Passed' },
+  WARN: { color: '#fbbf24', label: 'Warning' },
+  ERROR:{ color: '#f87171', label: 'Failed'  },
+  NONE: { color: '#94a3b8', label: 'Not Configured' },
+};
+
+function extractErrorMessage(err: unknown): string {
+  const axiosErr = err as AxiosError<{ detail?: string }>;
+  return axiosErr.response?.data?.detail ?? (err instanceof Error ? err.message : 'Failed to load security results');
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export const SecurityResultsPage: React.FC = () => {
+  const [sast, setSast]         = useState<SastResponse | null>(null);
+  const [dast, setDast]         = useState<DastResponse | null>(null);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string | null>(null);
+
+  const fetchResults = async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [sastRes, dastRes] = await Promise.all([
+        httpClient.get<SastResponse>('/security/sast'),
+        httpClient.get<DastResponse>('/security/dast'),
+      ]);
+      setSast(sastRes.data);
+      setDast(dastRes.data);
+    } catch (err) {
+      setError(extractErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void fetchResults(); }, []);
+
+  const qg = sast ? QG_STYLE[sast.quality_gate] : QG_STYLE.NONE;
+
+  return (
+    <Box className="dash-root">
+      <Card className="dash-card">
+        <CardContent sx={{ p: 3 }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={700} className="dash-title">
+                Security Scan Results
+              </Typography>
+              <Typography variant="body2" className="dash-subtitle">
+                SAST (SonarQube) and DAST (OWASP ZAP) findings with remediation guidance.
+              </Typography>
+            </Box>
+            <Button
+              startIcon={loading ? <CircularProgress size={14} color="inherit" /> : <RefreshIcon />}
+              onClick={() => void fetchResults()}
+              disabled={loading}
+              variant="outlined"
+              size="small"
+              className="dash-refresh-btn"
+            >
+              Refresh
+            </Button>
+          </Box>
+
+          {error && (
+            <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {loading && !sast ? (
+            <Box display="flex" justifyContent="center" mt={6}>
+              <CircularProgress sx={{ color: '#63b3ed' }} />
+            </Box>
+          ) : (
+            <Grid container spacing={3} mt={1}>
+              {/* SAST Panel */}
+              <Grid item xs={12} md={6}>
+                <Box className="dash-metric-card" sx={{ p: 2.5, borderRadius: 2 }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+                    <Typography variant="subtitle1" fontWeight={600} color="#e2e8f0">
+                      SAST — SonarQube
+                    </Typography>
+                    <Box display="flex" gap={1} alignItems="center">
+                      <Chip
+                        label={`Quality Gate: ${qg.label}`}
+                        size="small"
+                        sx={{ color: qg.color, background: `${qg.color}20`, fontWeight: 700, fontSize: 10 }}
+                      />
+                      {sast?.sonar_url && (
+                        <Button
+                          size="small"
+                          href={sast.sonar_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          endIcon={<OpenInNewIcon fontSize="small" />}
+                          sx={{ color: '#63b3ed', textTransform: 'none', fontSize: 11 }}
+                        >
+                          Open
+                        </Button>
+                      )}
+                    </Box>
+                  </Box>
+
+                  {sast && sast.issues.length > 0 ? (
+                    <Box sx={{ overflowX: 'auto' }}>
+                      <Table size="small">
+                        <TableHead className="dash-table-head">
+                          <TableRow>
+                            <TableCell>Severity</TableCell>
+                            <TableCell>Message</TableCell>
+                            <TableCell>Component</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody className="dash-table-body">
+                          {sast.issues.slice(0, 10).map((issue) => {
+                            const style = SEVERITY_STYLE[issue.severity];
+                            return (
+                              <TableRow key={issue.key} className="dash-table-row">
+                                <TableCell>
+                                  <Chip
+                                    label={issue.severity}
+                                    size="small"
+                                    sx={{ color: style.color, background: style.bg, fontSize: 10 }}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="caption" color="#e2e8f0">{issue.message}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="caption" color="rgba(148,163,184,0.6)" noWrap>
+                                    {issue.component}{issue.line ? `:${issue.line}` : ''}
+                                  </Typography>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                      {sast.total_issues > 10 && (
+                        <Typography variant="caption" color="rgba(148,163,184,0.5)" mt={1} display="block">
+                          Showing 10 of {sast.total_issues} issues. Open SonarQube for full report.
+                        </Typography>
+                      )}
+                    </Box>
+                  ) : (
+                    <Typography variant="body2" color="rgba(148,163,184,0.4)" fontStyle="italic">
+                      {sast?.quality_gate === 'NONE'
+                        ? 'SonarQube not configured. Set SONAR_HOST_URL and SONAR_TOKEN.'
+                        : 'No issues found.'}
+                    </Typography>
+                  )}
+                </Box>
+              </Grid>
+
+              {/* DAST Panel */}
+              <Grid item xs={12} md={6}>
+                <Box className="dash-metric-card" sx={{ p: 2.5, borderRadius: 2 }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+                    <Typography variant="subtitle1" fontWeight={600} color="#e2e8f0">
+                      DAST — OWASP ZAP
+                    </Typography>
+                    <Box display="flex" gap={1} alignItems="center">
+                      {dast && dast.total_alerts > 0 && (
+                        <>
+                          <Chip label={`High: ${dast.high_risk}`}   size="small" sx={{ color: '#f87171', background: 'rgba(248,113,113,0.12)', fontSize: 10 }} />
+                          <Chip label={`Med: ${dast.medium_risk}`}  size="small" sx={{ color: '#fbbf24', background: 'rgba(251,191,36,0.12)',  fontSize: 10 }} />
+                        </>
+                      )}
+                      {dast?.zap_url && (
+                        <Button
+                          size="small"
+                          href={dast.zap_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          endIcon={<OpenInNewIcon fontSize="small" />}
+                          sx={{ color: '#63b3ed', textTransform: 'none', fontSize: 11 }}
+                        >
+                          Open
+                        </Button>
+                      )}
+                    </Box>
+                  </Box>
+
+                  {dast && dast.alerts.length > 0 ? (
+                    <Box sx={{ overflowX: 'auto' }}>
+                      <Table size="small">
+                        <TableHead className="dash-table-head">
+                          <TableRow>
+                            <TableCell>Risk</TableCell>
+                            <TableCell>Alert</TableCell>
+                            <TableCell>URL</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody className="dash-table-body">
+                          {dast.alerts.slice(0, 10).map((alert, i) => {
+                            const style = RISK_STYLE[alert.risk];
+                            return (
+                              <TableRow key={i} className="dash-table-row">
+                                <TableCell>
+                                  <Chip
+                                    label={alert.risk}
+                                    size="small"
+                                    sx={{ color: style.color, background: style.bg, fontSize: 10 }}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="caption" color="#e2e8f0">{alert.alert}</Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="caption" color="rgba(148,163,184,0.6)" noWrap sx={{ maxWidth: 120, display: 'block' }}>
+                                    {alert.url}
+                                  </Typography>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </Box>
+                  ) : (
+                    <Typography variant="body2" color="rgba(148,163,184,0.4)" fontStyle="italic">
+                      {!dast?.zap_url
+                        ? 'OWASP ZAP not configured. Set ZAP_BASE_URL and ZAP_API_KEY.'
+                        : 'No alerts found.'}
+                    </Typography>
+                  )}
+                </Box>
+              </Grid>
+            </Grid>
+          )}
+        </CardContent>
+      </Card>
+    </Box>
+  );
+};

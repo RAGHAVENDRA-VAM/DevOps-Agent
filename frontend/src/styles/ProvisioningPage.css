@@ -1,0 +1,101 @@
+/* ProvisioningPage.css */
+
+.prov-root {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0e1a 0%, #0d1b2a 100%);
+  padding: 32px;
+}
+
+.prov-title {
+  font-weight: 700 !important;
+  color: #e2e8f0 !important;
+}
+
+.prov-subtitle {
+  color: rgba(148,163,184,0.7) !important;
+  margin-top: 4px !important;
+}
+
+/* Progress bar */
+.prov-progress .MuiLinearProgress-bar {
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 3px;
+}
+.prov-progress.complete .MuiLinearProgress-bar {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+.prov-progress {
+  height: 6px !important;
+  border-radius: 3px !important;
+  background: rgba(99,179,237,0.1) !important;
+}
+
+/* Panel shared */
+.prov-panel {
+  background: rgba(13,25,48,0.8);
+  border: 1px solid rgba(99,179,237,0.15);
+  border-radius: 12px;
+  padding: 24px;
+  backdrop-filter: blur(10px);
+}
+
+.prov-panel-label {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px !important;
+  color: rgba(148,163,184,0.5) !important;
+  font-weight: 600 !important;
+  display: block;
+  margin-bottom: 16px !important;
+}
+
+/* Step icon */
+.prov-step-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+.prov-step-icon.pending { border: 2px solid rgba(148,163,184,0.3); }
+.prov-step-icon.running { border: 2px solid #63b3ed; }
+.prov-step-icon.done    { border: 2px solid #10b981; background: rgba(16,185,129,0.1); }
+.prov-step-icon.error   { border: 2px solid #ef4444; background: rgba(239,68,68,0.1); }
+
+/* Infra result panel */
+.prov-infra-panel {
+  background: rgba(13,25,48,0.8);
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+}
+
+/* Live logs terminal */
+.prov-logs-panel {
+  background: rgba(5,8,16,0.9);
+  border: 1px solid rgba(99,179,237,0.12);
+  border-radius: 12px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.prov-logs-scroll {
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: monospace;
+}
+.prov-logs-scroll::-webkit-scrollbar { width: 4px; }
+.prov-logs-scroll::-webkit-scrollbar-thumb {
+  background: rgba(99,179,237,0.2);
+  border-radius: 2px;
+}
+
+/* Tech chips */
+.prov-chip-language  { background: rgba(59,130,246,0.15) !important; color: #93c5fd !important; border: 1px solid rgba(59,130,246,0.3) !important; }
+.prov-chip-framework { background: rgba(139,92,246,0.15) !important; color: #c4b5fd !important; border: 1px solid rgba(139,92,246,0.3) !important; }
+.prov-chip-build     { background: rgba(16,185,129,0.15) !important; color: #6ee7b7 !important; border: 1px solid rgba(16,185,129,0.3) !important; }
+.prov-chip-docker    { background: rgba(14,165,233,0.15) !important; color: #7dd3fc !important; border: 1px solid rgba(14,165,233,0.3) !important; }

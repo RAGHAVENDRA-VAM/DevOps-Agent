@@ -1,0 +1,72 @@
+/* DashboardPages.css — shared styles for Deployments, DORA, Security, FailedPipelines */
+
+.dash-root {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0e1a 0%, #0d1b2a 100%);
+  padding: 32px;
+}
+
+.dash-card {
+  background: rgba(13,25,48,0.8) !important;
+  border: 1px solid rgba(99,179,237,0.15) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(10px);
+}
+
+.dash-title {
+  font-weight: 700 !important;
+  color: #e2e8f0 !important;
+}
+
+.dash-subtitle {
+  color: rgba(148,163,184,0.7) !important;
+}
+
+/* Table */
+.dash-table-head .MuiTableCell-root {
+  color: rgba(148,163,184,0.6) !important;
+  border-bottom: 1px solid rgba(99,179,237,0.12) !important;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dash-table-body .MuiTableCell-root {
+  color: #e2e8f0 !important;
+  border-bottom: 1px solid rgba(99,179,237,0.07) !important;
+}
+
+.dash-table-row:hover .MuiTableCell-root {
+  background: rgba(99,179,237,0.04) !important;
+}
+
+/* Refresh button */
+.dash-refresh-btn {
+  color: #63b3ed !important;
+  border-color: rgba(99,179,237,0.3) !important;
+}
+.dash-refresh-btn:hover {
+  border-color: #63b3ed !important;
+  background: rgba(99,179,237,0.06) !important;
+}
+
+/* Metric cards */
+.dash-metric-card {
+  background: rgba(13,25,48,0.8) !important;
+  border: 1px solid rgba(99,179,237,0.15) !important;
+  border-radius: 12px !important;
+}
+
+/* Error excerpt pre block */
+.dash-error-pre {
+  background: #050810;
+  color: #d4d4d4;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  max-height: 200px;
+  overflow: auto;
+  font-family: monospace;
+  border: 1px solid rgba(99,179,237,0.1);
+}
