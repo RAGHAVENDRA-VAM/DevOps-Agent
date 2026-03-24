@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import os
+<<<<<<< HEAD
 from dataclasses import dataclass, field
 from functools import lru_cache
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 from dotenv import load_dotenv
 
 
 def load_env() -> None:
     """
+<<<<<<< HEAD
     Load variables from a .env file for local development only.
     Production must use real environment variables or a secret manager.
     Does not override already-set environment variables.
@@ -89,3 +93,15 @@ class AppSettings:
 def get_settings() -> AppSettings:
     """Return the cached application settings singleton."""
     return AppSettings()
+=======
+    Local-dev convenience: load variables from a .env file if present.
+    Production should use real environment variables / secret managers instead.
+    """
+    # Only loads if file exists; does not override already-set environment variables by default.
+    load_dotenv()
+
+
+def get_env(name: str) -> str | None:
+    return os.getenv(name)
+
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

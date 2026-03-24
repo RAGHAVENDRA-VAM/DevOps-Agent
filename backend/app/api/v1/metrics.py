@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from __future__ import annotations
 
 from datetime import date
@@ -5,10 +6,14 @@ from typing import Literal
 
 from fastapi import APIRouter
 from pydantic import BaseModel
+=======
+from fastapi import APIRouter
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 router = APIRouter()
 
 
+<<<<<<< HEAD
 # ---------------------------------------------------------------------------
 # Pydantic response models
 # ---------------------------------------------------------------------------
@@ -71,3 +76,18 @@ async def get_dora_metrics() -> DoraMetricsResponse:
         change_failure_rate=[],
         mttr=[],
     )
+=======
+@router.get("/dora")
+async def get_dora_metrics():
+    """
+    Stub endpoint for DORA metrics.
+    Real implementation should aggregate data from pipeline and deployment events.
+    """
+    return {
+        "deploymentFrequency": [],
+        "leadTime": [],
+        "changeFailureRate": [],
+        "mttr": [],
+    }
+
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

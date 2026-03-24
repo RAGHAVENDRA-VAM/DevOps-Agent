@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from __future__ import annotations
 
 import logging
@@ -166,3 +167,25 @@ async def dast_results() -> DastResponse:
     except httpx.HTTPError as exc:
         logger.exception("ZAP request failed")
         raise HTTPException(status_code=502, detail=f"OWASP ZAP unreachable: {exc}") from exc
+=======
+from fastapi import APIRouter
+
+router = APIRouter()
+
+
+@router.get("/sast")
+async def sast_results():
+    """
+    Stub endpoint for SAST results from SonarQube.
+    """
+    return {"issues": [], "qualityGate": "UNKNOWN"}
+
+
+@router.get("/dast")
+async def dast_results():
+    """
+    Stub endpoint for DAST results from OWASP ZAP.
+    """
+    return {"alerts": []}
+
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

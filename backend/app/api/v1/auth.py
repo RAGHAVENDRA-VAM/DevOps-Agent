@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+<<<<<<< HEAD
 import logging
 import os
 import secrets
@@ -72,6 +73,54 @@ async def github_oauth_callback(code: str, state: str, request: Request) -> Redi
     async with httpx.AsyncClient(timeout=15) as client:
         token_res = await client.post(
             _GITHUB_TOKEN_URL,
+=======
+import os
+
+import httpx
+from fastapi import APIRouter, HTTPException
+from starlette.responses import RedirectResponse, Response
+
+router = APIRouter()
+
+
+@router.get("/github")
+async def github_oauth_start():
+    """
+    Initiate GitHub OAuth flow.
+    Production should generate and validate a `state` parameter to prevent CSRF.
+    """
+    client_id = os.getenv("GITHUB_CLIENT_ID")
+    if not client_id:
+        raise HTTPException(status_code=503, detail="GitHub OAuth not configured")
+
+    redirect_uri = os.getenv("GITHUB_OAUTH_CALLBACK_URL", "")
+    params = f"client_id={client_id}&redirect_uri={redirect_uri}&scope=repo%20workflow%20read:user"
+    url = f"https://github.com/login/oauth/authorize?{params}"
+    return RedirectResponse(url)
+
+
+@router.get("/github/callback")
+async def github_oauth_callback(code: str):
+    """
+    GitHub OAuth callback handler.
+
+    Exchanges `code` for an access token and stores it in an HttpOnly cookie (local-dev).
+
+    Production guidance:
+    - Store tokens server-side (DB/session) or encrypted at rest.
+    - Validate `state` parameter to prevent CSRF.
+    - Consider GitHub App auth for org-grade access.
+    """
+    client_id = os.getenv("GITHUB_CLIENT_ID")
+    client_secret = os.getenv("GITHUB_CLIENT_SECRET")
+    if not client_id or not client_secret:
+        raise HTTPException(status_code=503, detail="GitHub OAuth not configured")
+
+    token_url = "https://github.com/login/oauth/access_token"
+    async with httpx.AsyncClient(timeout=15) as client:
+        token_res = await client.post(
+            token_url,
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
             headers={"Accept": "application/json"},
             data={
                 "client_id": client_id,
@@ -81,34 +130,66 @@ async def github_oauth_callback(code: str, state: str, request: Request) -> Redi
         )
 
     if token_res.status_code >= 400:
+<<<<<<< HEAD
         raise HTTPException(status_code=502, detail="Failed to exchange GitHub OAuth code.")
+=======
+        raise HTTPException(status_code=502, detail="Failed to exchange GitHub OAuth code")
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
     payload = token_res.json()
     access_token = payload.get("access_token")
     if not access_token:
+<<<<<<< HEAD
         raise HTTPException(status_code=502, detail="GitHub OAuth token missing in response.")
 
     # After successful OAuth set cookie and redirect user to the Approvals page
     response = RedirectResponse(url=f"{_FRONTEND_URL}/approvals", status_code=302)
+=======
+        raise HTTPException(status_code=502, detail="GitHub OAuth token missing in response")
+
+    response = RedirectResponse(url="http://localhost:5173/repos", status_code=302)
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     response.set_cookie(
         key="gh_token",
         value=access_token,
         httponly=True,
+<<<<<<< HEAD
         secure=_COOKIE_SECURE,
         samesite="lax",
         max_age=3600,
     )
     response.delete_cookie("oauth_state")
+=======
+        secure=False,  # set True behind HTTPS
+        samesite="lax",
+        max_age=60 * 60,
+    )
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     return response
 
 
 @router.get("/me")
+<<<<<<< HEAD
 async def get_current_user() -> dict[str, str]:
     """Return the current authenticated user identity (stub)."""
+=======
+async def get_current_user():
+    """
+    Placeholder for returning the current authenticated user.
+    In production, this would validate a session/JWT and fetch user info from GitHub or DB.
+    """
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     return {"username": "demo-user", "provider": "github"}
 
 
 @router.get("/favicon.ico", include_in_schema=False)
+<<<<<<< HEAD
 async def favicon() -> Response:
     """Suppress noisy 404s from browser favicon requests during OAuth redirects."""
     return Response(status_code=204)
+=======
+async def favicon():
+    # Avoid noisy 404s when the browser requests /favicon.ico from the backend during OAuth redirects.
+    return Response(status_code=204)
+
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

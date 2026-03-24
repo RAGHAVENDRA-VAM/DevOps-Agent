@@ -1,6 +1,10 @@
 from fastapi import APIRouter
 
+<<<<<<< HEAD
 from app.api.v1 import auth, github, analysis, pipelines, metrics, security, infrastructure, builds, approvals, webhook
+=======
+from app.api.v1 import auth, github, analysis, pipelines, metrics, security, infrastructure, builds
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 router = APIRouter()
 
@@ -12,6 +16,9 @@ router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
 router.include_router(security.router, prefix="/security", tags=["security"])
 router.include_router(infrastructure.router, prefix="/infrastructure", tags=["infrastructure"])
 router.include_router(builds.router, prefix="/builds", tags=["builds"])
+<<<<<<< HEAD
 router.include_router(approvals.router, prefix="/approvals", tags=["approvals"])
 router.include_router(webhook.router, prefix="/webhooks", tags=["webhooks"])
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 

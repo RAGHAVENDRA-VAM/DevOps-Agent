@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from __future__ import annotations
 
 import asyncio
@@ -6,10 +7,13 @@ from contextlib import asynccontextmanager
 import os
 from typing import AsyncGenerator
 
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router as api_router
+<<<<<<< HEAD
 from app.api.v1.approvals import start_poller
 from app.config import get_settings, load_env
 from app.db import create_tables
@@ -64,13 +68,40 @@ def create_app() -> FastAPI:
     application.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
+=======
+from app.config import load_env
+
+
+def create_app() -> FastAPI:
+    load_env()
+    app = FastAPI(
+        title="DevOps Agent Platform API",
+        version="0.1.0",
+        docs_url="/api/docs",
+        openapi_url="/api/openapi.json",
+        timeout=900,  # 15 min for long Azure provisioning
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:5173"],
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
+<<<<<<< HEAD
     application.include_router(api_router, prefix="/api")
     return application
 
 
 app = create_app()
+=======
+    app.include_router(api_router, prefix="/api")
+    return app
+
+
+app = create_app()
+
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
