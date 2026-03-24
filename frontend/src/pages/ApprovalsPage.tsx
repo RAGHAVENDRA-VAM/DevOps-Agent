@@ -12,7 +12,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import {
   Approval, DebugState, DetectedTech,
-  approveRequest, fetchDebugState, listApprovals,
+  approveRequest, fetchDebugState, listApprovals, retryRequest,
   openLogStream, pollNow, rejectRequest,
 } from '../services/approvalService';
 
@@ -506,9 +506,12 @@ export const ApprovalsPage: React.FC = () => {
     setActionLoading(id);
     try {
       await retryRequest(id);
-      setApprovals((prev) => prev.map((a) => a.id === id ? { ...a, status: 'pending', pipeline_stage: 0, stage_logs: {}, logs: [] } : a));
-    } catch { setError('Retry failed. Please try again.'); }
-    finally { setActionLoading(null); }
+      // Mark as pending so user can re-approve; preserve logs for audit.
+      setApprovals((prev) => prev.map((a) => a.id === id ? { ...a, status: 'pending', pipeline_stage: 0 } : a));
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || err?.message || 'Retry failed. Please try again.';
+      setError(String(msg));
+    } finally { setActionLoading(null); }
   };
 
   const pending  = approvals.filter((a) => a.status === 'pending').length;

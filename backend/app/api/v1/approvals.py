@@ -29,6 +29,7 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+import traceback
 
 from app.db import AsyncSessionLocal, get_db
 from app.models import Approval
@@ -139,6 +140,20 @@ async def _push_log(approval_id: str, message: str, stage: int = 0) -> None:
     event_data = f"{stage}|{message}" if stage > 0 else message
     for queue in _SUBSCRIBERS.get(approval_id, []):
         queue.put_nowait(event_data)
+
+
+async def _push_stage_event(approval_id: str, stage: int, severity: str, message: str) -> None:
+    """Push stage-level structured event (JSON serialized) for metrics and alerts."""
+    import json as _json  # noqa: PLC0415
+
+    event = {
+        "timestamp": time.time(),
+        "stage": stage,
+        "severity": severity,
+        "message": message,
+    }
+    payload = f"STAGE-EVENT|{_json.dumps(event)}"
+    await _push_log(approval_id, payload, stage)
 
 
 # ---------------------------------------------------------------------------
@@ -389,6 +404,7 @@ async def reset_approval(
     if not record:
         raise HTTPException(status_code=404, detail="Approval not found.")
     # Reset pipeline state so UI shows Approve/Reject again
+    logger.info("Reset approval %s (prev_status=%s)", approval_id, getattr(record, 'status', None))
     record.status = "pending"
     record.pipeline_stage = 0
     record.stage_logs = {}
@@ -398,6 +414,35 @@ async def reset_approval(
     record.actions_run_url = None
     await db.commit()
     return {"status": "pending"}
+
+
+# ---------------------------------------------------------------------------
+# Retry — re-run pipeline without clearing historical logs (enterprise-friendly)
+# ---------------------------------------------------------------------------
+
+
+@router.post("/{approval_id}/retry")
+async def retry_approval(
+    approval_id: str,
+    gh_token: str | None = Cookie(default=None),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    if not gh_token:
+        raise HTTPException(status_code=401, detail="Not authenticated.")
+    result = await db.execute(select(Approval).where(Approval.id == approval_id))
+    record = result.scalar_one_or_none()
+    if not record:
+        raise HTTPException(status_code=404, detail="Approval not found.")
+    if record.status != "failed":
+        raise HTTPException(status_code=400, detail="Only failed approvals can be retried.")
+    logger.info("Retry requested for %s (prev_status=%s) — marking pending for manual re-approve", approval_id, record.status)
+    # Preserve existing logs for audit. Mark as pending so user can approve to restart from Stage 1.
+    record.status = "pending"
+    record.pipeline_stage = 0
+    # Optionally annotate that a retry was requested
+    await db.commit()
+    await _push_log(approval_id, "Manual retry requested — awaiting re-approval", 0)
+    return {"status": "pending", "approval_id": approval_id}
 
 
 # ---------------------------------------------------------------------------
@@ -418,6 +463,7 @@ async def approve_approval(
         raise HTTPException(status_code=404, detail="Approval not found.")
     if record.status != "pending":
         raise HTTPException(status_code=400, detail="Only pending approvals can be approved.")
+    logger.info("Approve called for %s (prev_status=%s) — scheduling pipeline", approval_id, record.status)
     record.status = "running"
     await db.commit()
     asyncio.create_task(_run_pipeline(approval_id, gh_token))
@@ -505,6 +551,7 @@ async def _run_pipeline(approval_id: str, gh_token: str) -> None:
         repo: str = record.repo
         branch: str = record.branch
         cfg: dict = dict(record.config)
+    logger.info("Pipeline run started for %s — repo=%s branch=%s", approval_id, _sanitize(repo), branch)
 
     async def log(msg: str, stage: int = 0) -> None:
         await _push_log(approval_id, msg, stage)
@@ -553,6 +600,7 @@ async def _run_pipeline(approval_id: str, gh_token: str) -> None:
                 rec.detected_tech = tech
                 await db.commit()
         await log("Tech detection complete.", 1)
+        await _push_stage_event(approval_id, 1, "info", "Tech detection complete")
 
         resolved_branch = await _verify_repo_access(repo, branch, gh_token)
         deploy_cfg = _build_deploy_config(cfg, tech)
@@ -573,6 +621,7 @@ async def _run_pipeline(approval_id: str, gh_token: str) -> None:
                 await db.commit()
         await log(f"Provisioned URL: {deployed_url}", 2)
         await log("Infrastructure provisioning complete.", 2)
+        await _push_stage_event(approval_id, 2, "info", "Infrastructure provisioning complete")
 
         # ── STAGE 3: CI/CD Pipeline Generation ─────────────────────────────
         await _set_stage(3)
@@ -623,7 +672,13 @@ async def _run_pipeline(approval_id: str, gh_token: str) -> None:
             if rec:
                 rec.status = "failed"
                 await db.commit()
-        await log(f"PIPELINE FAILED: {exc}", 0)
+        # Store a richer error message + traceback so frontend shows useful details.
+        # Prefix traceback with "PIPELINE" so the frontend replay includes it.
+        err_msg = repr(exc)
+        tb = traceback.format_exc()
+        combined = "PIPELINE FAILED: " + (err_msg or "") + "\n" + (tb or "")
+        # Ensure the entire traceback is stored as a single PIPELINE-prefixed message
+        await log(combined, 0)
         for queue in _SUBSCRIBERS.get(approval_id, []):
             queue.put_nowait("FAILED")
 
@@ -701,23 +756,82 @@ async def _run_terraform(cfg: dict, log) -> str:
     app_name: str = str(cfg.get("APP_NAME", "devops-app"))
     fallback_url = f"https://{app_name}.azurewebsites.net"
 
-    if not shutil.which("terraform"):
-        await log("  terraform binary not found — skipping IaC provisioning")
+    try:
+        if not shutil.which("terraform"):
+            await log("  terraform binary not found — skipping IaC provisioning")
+            return fallback_url
+
+        deploy_target: str = str(cfg.get("DEPLOY_TARGET", "app_service")).lower()
+        module_map = {"aks": "aks", "vm": "vm", "azure_vm": "vm"}
+        module_dir_name = module_map.get(deploy_target, "app-service")
+
+        base = os.path.join(
+            os.path.dirname(__file__),  # backend/app/api/v1/
+            "..", "..", "..", "..",    # → project root
+            "templates", "terraform", "modules", module_dir_name,
+        )
+        tf_dir = os.path.normpath(base)
+
+        if not os.path.isdir(tf_dir):
+            await log(f"  Terraform module dir not found: {tf_dir} — skipping")
+            return fallback_url
+
+        env = {
+            **os.environ,
+            "TF_VAR_app_name":        app_name,
+            "TF_VAR_resource_group":  str(cfg.get("RESOURCE_GROUP", "devops-rg")),
+            "TF_VAR_location":        str(cfg.get("LOCATION", "eastus")),
+            "TF_VAR_sku":             str(cfg.get("APP_SERVICE_SKU", "B1")),
+            "TF_VAR_node_count":      str(cfg.get("NODE_COUNT", "1")),
+            "TF_VAR_vm_size":         str(cfg.get("VM_SIZE", "Standard_B1s")),
+            "TF_VAR_admin_username":  str(cfg.get("ADMIN_USER", "azureuser")),
+            "TF_INPUT":               "false",
+        }
+
+        async def _tf(args: list[str]) -> tuple[int, str]:
+            proc = await asyncio.create_subprocess_exec(
+                "terraform", *args,
+                cwd=tf_dir, env=env,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+            )
+            stdout, _ = await proc.communicate()
+            return proc.returncode, stdout.decode(errors="replace")
+
+        rc, out = await _tf(["init", "-no-color"])
+        await log(f"  terraform init: {'OK' if rc == 0 else 'FAILED'}")
+        if rc != 0:
+            await log(out[-2000:])
+            await log("  terraform failure, using fallback URL and continuing")
+            return fallback_url
+
+        rc, out = await _tf(["apply", "-auto-approve", "-no-color"])
+        await log(f"  terraform apply: {'OK' if rc == 0 else 'FAILED'}")
+        if rc != 0:
+            await log(out[-2000:])
+            await log("  terraform apply failed, using fallback URL and continuing")
+            return fallback_url
+
+        rc, out = await _tf(["output", "-json"])
+        if rc == 0:
+            try:
+                outputs = _json.loads(out)
+                url = outputs.get("app_url", {}).get("value", "")
+                if url:
+                    return str(url)
+            except _json.JSONDecodeError:
+                await log("  terraform output JSON parse failed")
+
         return fallback_url
 
-    deploy_target: str = str(cfg.get("DEPLOY_TARGET", "app_service")).lower()
-    module_map = {"aks": "aks", "vm": "vm", "azure_vm": "vm"}
-    module_dir_name = module_map.get(deploy_target, "app-service")
-
-    base = os.path.join(
-        os.path.dirname(__file__),  # backend/app/api/v1/
-        "..", "..", "..", "..",    # → project root
-        "templates", "terraform", "modules", module_dir_name,
-    )
-    tf_dir = os.path.normpath(base)
-
-    if not os.path.isdir(tf_dir):
-        await log(f"  Terraform module dir not found: {tf_dir} — skipping")
+    except FileNotFoundError as exc:
+        await log(f"  terraform command not found: {exc}")
+        await log("  ensure terraform is installed and in PATH")
+        return fallback_url
+    except Exception as exc:
+        await log(f"  unexpected terraform exception: {exc}")
+        await log(traceback.format_exc())
+        await log("  continuing with fallback URL")
         return fallback_url
 
     env = {

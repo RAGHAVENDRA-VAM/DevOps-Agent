@@ -59,7 +59,8 @@ export const rejectRequest = async (id: string): Promise<void> => {
 };
 
 export const retryRequest = async (id: string): Promise<void> => {
-  await httpClient.post(`/approvals/${id}/reset`);
+  // Use retry endpoint which re-runs pipeline while preserving logs.
+  await httpClient.post(`/approvals/${id}/retry`);
 };
 
 export const openLogStream = (id: string): EventSource => {
