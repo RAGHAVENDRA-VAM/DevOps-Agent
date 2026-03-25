@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 """Pipeline monitoring service — fetches and analyses GitHub Actions workflow runs."""
 from __future__ import annotations
 
@@ -30,6 +31,8 @@ async def get_workflow_runs(
     """Fetch GitHub Actions workflow runs for a repository."""
     params: dict[str, str | int] = {"per_page": min(limit, 100)}
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 """
 Pipeline monitoring service to track GitHub Actions workflow runs and detect failures.
 """
@@ -60,12 +63,16 @@ async def get_workflow_runs(
     """
     url = f"https://api.github.com/repos/{repo_full_name}/actions/runs"
     params = {"per_page": min(limit, 100)}
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     if status:
         params["status"] = status
 
     async with httpx.AsyncClient(timeout=20) as client:
         res = await client.get(
+<<<<<<< HEAD
 <<<<<<< HEAD
             f"https://api.github.com/repos/{repo_full_name}/actions/runs",
             headers=_auth_headers(gh_token),
@@ -133,6 +140,8 @@ async def get_workflow_run_logs(
     except zipfile.BadZipFile:
         logger.warning("Log archive for run %d is not a valid ZIP", run_id)
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
             url,
             headers={
                 "Accept": "application/vnd.github+json",
@@ -222,11 +231,15 @@ async def get_workflow_run_logs(
                     return "\n\n".join(log_texts) if log_texts else None
             except Exception:
                 return None
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         return None
 
 
 async def get_workflow_run_jobs(
+<<<<<<< HEAD
 <<<<<<< HEAD
     repo_full_name: str,
     run_id: int,
@@ -270,6 +283,8 @@ def extract_error_from_logs(logs: str, max_length: int = 2_000) -> str:
 
     return excerpt
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     repo_full_name: str, run_id: int, gh_token: str
 ) -> list[dict]:
     """
@@ -343,4 +358,7 @@ def extract_error_from_logs(logs: str, max_length: int = 2000) -> str:
         error_text = error_text[-max_length:]
     
     return error_text
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

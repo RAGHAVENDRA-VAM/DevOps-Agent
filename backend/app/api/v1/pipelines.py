@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import asyncio
 import base64
 import json
@@ -22,6 +23,8 @@ from app.services.pipeline_monitor import (
     get_workflow_run_logs,
 )
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 import os
 import json
 from fastapi import APIRouter, Cookie, HTTPException
@@ -39,11 +42,15 @@ from app.services.pipeline_monitor import (
     extract_error_from_logs,
 )
 from app.services.ai_analyzer import analyze_pipeline_error
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 _GITHUB_API = "https://api.github.com"
 _GITHUB_HEADERS = {
@@ -55,6 +62,8 @@ _GITHUB_HEADERS = {
 # ---------------------------------------------------------------------------
 # Pydantic models
 # ---------------------------------------------------------------------------
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 =======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
@@ -72,6 +81,7 @@ class PipelineCreateRequest(BaseModel):
     tech: dict
     enableSast: bool = True
     enableDast: bool = True
+<<<<<<< HEAD
 <<<<<<< HEAD
     deploy: dict | None = None
 
@@ -206,6 +216,8 @@ async def _generate_pipeline_yaml(
 
     build_steps: list[dict] = [
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     deploy: dict | None = None  # infra details from provisioning
 
 
@@ -354,12 +366,16 @@ async def _generate_pipeline_yaml(
         ]
 
     build_steps = [
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         {"uses": "actions/checkout@v4"},
         *lang_steps,
         {
             "name": "Upload artifact",
             "uses": "actions/upload-artifact@v4",
+<<<<<<< HEAD
 <<<<<<< HEAD
             "with": {
                 "name": "build-artifact",
@@ -378,6 +394,8 @@ async def _generate_pipeline_yaml(
     deploy_steps: list[dict] = _build_deploy_steps(deploy) if deploy else []
 
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
             "with": {"name": "build-artifact", "path": artifact_path, "retention-days": 7},
         },
     ]
@@ -428,6 +446,9 @@ async def _generate_pipeline_yaml(
             ]
 
     # Build the full workflow dict and serialize to YAML properly
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     workflow: dict = {
         "name": "CI/CD Pipeline",
@@ -437,12 +458,18 @@ async def _generate_pipeline_yaml(
         },
         "jobs": {
 <<<<<<< HEAD
+<<<<<<< HEAD
             "build": build_job,
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
             "build": {
                 "runs-on": "ubuntu-latest",
                 "steps": build_steps,
             }
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         },
     }
@@ -452,7 +479,11 @@ async def _generate_pipeline_yaml(
             "runs-on": "ubuntu-latest",
             "needs": "build",
 <<<<<<< HEAD
+<<<<<<< HEAD
             "if": f"github.ref == 'refs/heads/{branch}' && needs.build.result == 'success'",
+=======
+            "if": f"github.ref == 'refs/heads/{branch}'",
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 =======
             "if": f"github.ref == 'refs/heads/{branch}'",
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
@@ -462,6 +493,7 @@ async def _generate_pipeline_yaml(
     return yaml.dump(workflow, default_flow_style=False, sort_keys=False, allow_unicode=True)
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 def _build_lang_steps(language: str, build_tool: str) -> list[dict]:
     """Return language-specific CI steps (working-directory is set via job defaults)."""
@@ -917,6 +949,8 @@ async def preview_pipeline(
         payload.repoFullName,
         payload.branch,
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 @router.post("/preview")
 async def preview_pipeline(payload: PipelinePreviewRequest, gh_token: str | None = Cookie(default=None)):
     """
@@ -933,6 +967,9 @@ async def preview_pipeline(payload: PipelinePreviewRequest, gh_token: str | None
     yaml_content = await _generate_pipeline_yaml(
         repo_full_name,
         branch,
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         payload.tech,
         payload.enableSast,
@@ -944,6 +981,7 @@ async def preview_pipeline(payload: PipelinePreviewRequest, gh_token: str | None
 
 @router.post("/create")
 async def create_pipeline(
+<<<<<<< HEAD
 <<<<<<< HEAD
     payload: PipelineCreateRequest,
     gh_token: str | None = Cookie(default=None),
@@ -987,6 +1025,8 @@ async def create_pipeline(
         "secrets_configured": bool(payload.deploy),
     }
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     payload: PipelineCreateRequest, gh_token: str | None = Cookie(default=None)
 ):
     """
@@ -1206,11 +1246,15 @@ async def create_pipeline(
             else:
                 logger.exception("All attempts failed: %s", e)
                 raise HTTPException(status_code=500, detail=f"Failed after {max_retries} attempts: {str(e)}")
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 
 @router.get("/failed")
 async def get_failed_pipelines(
+<<<<<<< HEAD
 <<<<<<< HEAD
     days: int = 7,
     gh_token: str | None = Cookie(default=None),
@@ -1241,6 +1285,8 @@ async def get_failed_pipelines(
 
             tech_stack: dict = {
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     days: int = 7, gh_token: str | None = Cookie(default=None)
 ):
     """
@@ -1288,6 +1334,9 @@ async def get_failed_pipelines(
             # For now, we'll use a basic detection or defaults
             # TODO: Store tech stack in database when pipeline is created
             tech_stack = {
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
                 "language": "unknown",
                 "framework": None,
@@ -1296,6 +1345,7 @@ async def get_failed_pipelines(
                 "hasHelm": False,
                 "hasTerraform": False,
             }
+<<<<<<< HEAD
 <<<<<<< HEAD
             try:
                 from app.api.v1.analysis import TechDetectionRequest, tech_detection  # noqa: PLC0415
@@ -1334,6 +1384,8 @@ async def get_failed_pipelines(
 
 @router.get("/{repo_full_name:path}/runs/{run_id}/analyze")
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
             
             # Try to detect tech stack from repo (quick check)
             # In production, you'd query a database where tech stack is stored
@@ -1378,11 +1430,15 @@ async def get_failed_pipelines(
 
 
 @router.get("/{repo_full_name}/runs/{run_id}/analyze")
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 async def analyze_pipeline_run(
     repo_full_name: str,
     run_id: int,
     gh_token: str | None = Cookie(default=None),
+<<<<<<< HEAD
 <<<<<<< HEAD
 ) -> dict:
     """Return detailed AI analysis for a specific failed pipeline run."""
@@ -1406,6 +1462,8 @@ async def analyze_pipeline_run(
 
     tech_stack: dict = {
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 ):
     """
     Get detailed AI analysis for a specific failed pipeline run.
@@ -1441,6 +1499,9 @@ async def analyze_pipeline_run(
     # Get tech stack (try to get from analysis endpoint or use defaults)
     # In production, you'd store tech stack when pipeline is created
     tech_stack = {
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         "language": "unknown",
         "framework": None,
@@ -1450,12 +1511,18 @@ async def analyze_pipeline_run(
         "hasTerraform": False,
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
     ai_analysis: dict = await asyncio.to_thread(analyze_pipeline_error, error_excerpt, tech_stack)
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
     # Get AI analysis (synchronous call, but we're in async context)
     import asyncio
     ai_analysis = await asyncio.to_thread(analyze_pipeline_error, error_excerpt, tech_stack)
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
     return {
@@ -1470,6 +1537,10 @@ async def analyze_pipeline_run(
         "run_url": run.get("html_url", ""),
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 =======
 
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

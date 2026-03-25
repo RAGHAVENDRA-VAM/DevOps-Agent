@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import logging
 
 import httpx
@@ -10,10 +11,16 @@ from fastapi import APIRouter, Cookie, HTTPException
 import logging
 import httpx
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
+from fastapi import APIRouter, Cookie, HTTPException
+import logging
+import httpx
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 _GITHUB_HEADERS = {
     "Accept": "application/vnd.github+json",
@@ -26,11 +33,14 @@ def _auth_headers(gh_token: str) -> dict[str, str]:
 
 =======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 @router.get("/{owner}/{repo}/runs")
 async def get_workflow_runs(
     owner: str,
     repo: str,
+<<<<<<< HEAD
 <<<<<<< HEAD
     branch: str | None = None,
     status: str | None = None,
@@ -43,6 +53,8 @@ async def get_workflow_runs(
     repo_full_name = f"{owner}/{repo}"
     params: dict[str, str | int] = {"per_page": 10}
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     branch: str = None,
     status: str = None,
     gh_token: str | None = Cookie(default=None)
@@ -55,11 +67,15 @@ async def get_workflow_runs(
     url = f"https://api.github.com/repos/{repo_full_name}/actions/runs"
     
     params = {"per_page": 10}
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     if branch:
         params["branch"] = branch
     if status:
         params["status"] = status
+<<<<<<< HEAD
 <<<<<<< HEAD
 
     async with httpx.AsyncClient(timeout=20) as client:
@@ -90,6 +106,8 @@ async def get_workflow_runs(
     ]
     return {"runs": runs, "total": len(runs)}
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     
     async with httpx.AsyncClient(timeout=20) as client:
         response = await client.get(
@@ -124,6 +142,9 @@ async def get_workflow_runs(
             })
         
         return {"runs": runs, "total": len(runs)}
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 
@@ -132,6 +153,7 @@ async def get_workflow_run(
     owner: str,
     repo: str,
     run_id: int,
+<<<<<<< HEAD
 <<<<<<< HEAD
     gh_token: str | None = Cookie(default=None),
 ) -> dict:
@@ -165,6 +187,8 @@ async def get_workflow_run(
         "jobs_url": run["jobs_url"],
     }
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     gh_token: str | None = Cookie(default=None)
 ):
     """Get details of a specific workflow run."""
@@ -204,6 +228,9 @@ async def get_workflow_run(
             "run_started_at": run.get("run_started_at"),
             "jobs_url": run["jobs_url"]
         }
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 
@@ -212,6 +239,7 @@ async def get_workflow_jobs(
     owner: str,
     repo: str,
     run_id: int,
+<<<<<<< HEAD
 <<<<<<< HEAD
     gh_token: str | None = Cookie(default=None),
 ) -> dict:
@@ -253,6 +281,8 @@ async def get_workflow_jobs(
     ]
     return {"jobs": jobs}
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     gh_token: str | None = Cookie(default=None)
 ):
     """Get jobs for a specific workflow run."""
@@ -301,6 +331,9 @@ async def get_workflow_jobs(
             })
         
         return {"jobs": jobs}
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 
@@ -309,6 +342,7 @@ async def get_workflow_logs(
     owner: str,
     repo: str,
     run_id: int,
+<<<<<<< HEAD
 <<<<<<< HEAD
     gh_token: str | None = Cookie(default=None),
 ) -> dict:
@@ -344,6 +378,8 @@ async def get_workflow_logs(
 
     return {"logs": logs}
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     gh_token: str | None = Cookie(default=None)
 ):
     """Get logs for a specific workflow run."""
@@ -404,6 +440,9 @@ async def get_workflow_logs(
                 })
         
         return {"logs": logs}
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 
@@ -412,6 +451,7 @@ async def get_workflow_artifacts(
     owner: str,
     repo: str,
     run_id: int,
+<<<<<<< HEAD
 <<<<<<< HEAD
     gh_token: str | None = Cookie(default=None),
 ) -> dict:
@@ -442,6 +482,8 @@ async def get_workflow_artifacts(
     ]
     return {"artifacts": artifacts, "total": len(artifacts)}
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     gh_token: str | None = Cookie(default=None)
 ):
     """Get artifacts for a specific workflow run."""
@@ -479,4 +521,7 @@ async def get_workflow_artifacts(
             })
         
         return {"artifacts": artifacts, "total": len(artifacts)}
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

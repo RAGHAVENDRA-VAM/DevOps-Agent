@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import base64
 import logging
 
@@ -16,12 +17,17 @@ _GITHUB_HEADERS = {
     "X-GitHub-Api-Version": "2022-11-28",
 }
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 from fastapi import APIRouter, Cookie, HTTPException
 from pydantic import BaseModel
 import httpx
 import re
 
 router = APIRouter()
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 
@@ -30,6 +36,7 @@ class TechDetectionRequest(BaseModel):
     branch: str
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 def _auth_headers(gh_token: str) -> dict[str, str]:
     return {**_GITHUB_HEADERS, "Authorization": f"Bearer {gh_token}"}
@@ -115,6 +122,8 @@ def _detect_framework_from_pyproject(content: str) -> str | None:
         return "django"
     return None
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 async def _get_github_file_content(
     repo_full_name: str, branch: str, file_path: str, gh_token: str
 ) -> str | None:
@@ -158,11 +167,15 @@ async def _list_repo_files(
             items = res.json()
             return [item["name"] for item in items if isinstance(item, dict) and "name" in item]
     return []
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 
 @router.post("/tech-detection")
 async def tech_detection(
+<<<<<<< HEAD
 <<<<<<< HEAD
     payload: TechDetectionRequest,
     gh_token: str | None = Cookie(default=None),
@@ -179,6 +192,8 @@ async def tech_detection(
 
     result: dict[str, str | bool | None] = {
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     payload: TechDetectionRequest, gh_token: str | None = Cookie(default=None)
 ):
     """
@@ -193,6 +208,9 @@ async def tech_detection(
 
     # Initialize detection results
     detected = {
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         "language": None,
         "framework": None,
@@ -202,6 +220,7 @@ async def tech_detection(
         "hasTerraform": False,
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     all_files = await _collect_all_files(repo, branch, gh_token, max_depth=2)
 
@@ -285,6 +304,8 @@ async def tech_detection(
     logger.info("Tech detection for %s@%s: %s", safe_repo, safe_branch, result)
     return result
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     # Check root directory files
     root_files = await _list_repo_files(repo_full_name, branch, "", gh_token)
 
@@ -382,5 +403,9 @@ async def tech_detection(
         detected["language"] = "python"
         detected["buildTool"] = "pip"
 
+<<<<<<< HEAD
+    return detected
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
     return detected
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

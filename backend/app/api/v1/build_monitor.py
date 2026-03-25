@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+from fastapi import APIRouter, Cookie, HTTPException, WebSocket, WebSocketDisconnect
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 =======
 from fastapi import APIRouter, Cookie, HTTPException, WebSocket, WebSocketDisconnect
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
@@ -9,6 +13,7 @@ import json
 import logging
 from typing import Dict, Set
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 from fastapi import APIRouter, Cookie, HTTPException, WebSocket, WebSocketDisconnect
 
@@ -16,10 +21,14 @@ from app.services.pipeline_monitor import get_workflow_run_logs, get_workflow_ru
 =======
 from app.services.pipeline_monitor import get_workflow_runs, get_workflow_run_logs
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
+from app.services.pipeline_monitor import get_workflow_runs, get_workflow_run_logs
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 _RUN_STATUS_MAP: dict[str, str] = {
     "in_progress": "building",
@@ -102,6 +111,8 @@ async def websocket_endpoint(
     try:
         while True:
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 # Store active WebSocket connections
 active_connections: Dict[str, Set[WebSocket]] = {}
 
@@ -144,11 +155,15 @@ async def websocket_endpoint(websocket: WebSocket, repo_owner: str, repo_name: s
     try:
         while True:
             # Keep connection alive and listen for client messages
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket, repo_key)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 @router.get("/{repo_owner}/{repo_name}/status")
@@ -211,6 +226,8 @@ async def _monitor_repository_builds(repo_full_name: str, gh_token: str) -> None
             await asyncio.sleep(30)
 
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 @router.get("/{repo_owner}/{repo_name}/status")
 async def get_build_status(
     repo_owner: str, 
@@ -317,12 +334,16 @@ async def monitor_repository_builds(repo_full_name: str, gh_token: str):
         except Exception as e:
             logger.error(f"Error monitoring {repo_full_name}: {e}")
             await asyncio.sleep(30)  # Wait longer on error
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 @router.post("/{repo_owner}/{repo_name}/monitor/start")
 async def start_monitoring(
     repo_owner: str,
     repo_name: str,
+<<<<<<< HEAD
 <<<<<<< HEAD
     gh_token: str | None = Cookie(default=None),
 ) -> dict:
@@ -334,6 +355,8 @@ async def start_monitoring(
     asyncio.create_task(_monitor_repository_builds(repo_full_name, gh_token))
     return {"status": "monitoring_started", "repo": repo_full_name}
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     gh_token: str | None = Cookie(default=None)
 ):
     """Start monitoring builds for a repository"""
@@ -345,5 +368,9 @@ async def start_monitoring(
     # Start background monitoring task
     asyncio.create_task(monitor_repository_builds(repo_full_name, gh_token))
     
+<<<<<<< HEAD
+    return {"status": "monitoring_started", "repo": repo_full_name}
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
     return {"status": "monitoring_started", "repo": repo_full_name}
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 from __future__ import annotations
 
 import asyncio
@@ -9,10 +10,13 @@ from typing import AsyncGenerator
 
 =======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router as api_router
+<<<<<<< HEAD
 <<<<<<< HEAD
 from app.api.v1.approvals import start_poller
 from app.config import get_settings, load_env
@@ -69,6 +73,8 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=cors_origins,
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 from app.config import load_env
 
 
@@ -85,6 +91,9 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:5173"],
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         allow_credentials=True,
         allow_methods=["*"],
@@ -92,16 +101,22 @@ def create_app() -> FastAPI:
     )
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     application.include_router(api_router, prefix="/api")
     return application
 
 
 app = create_app()
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     app.include_router(api_router, prefix="/api")
     return app
 
 
 app = create_app()
 
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

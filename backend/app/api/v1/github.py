@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import logging
 
 import httpx
@@ -27,6 +28,8 @@ async def list_repositories(
     if not gh_token:
         raise HTTPException(status_code=401, detail="Not authenticated with GitHub.")
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 from fastapi import APIRouter, Cookie, HTTPException
 import httpx
 
@@ -41,11 +44,15 @@ async def list_repositories(gh_token: str | None = Cookie(default=None)):
     """
     if not gh_token:
         raise HTTPException(status_code=401, detail="Not authenticated with GitHub")
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
     async with httpx.AsyncClient(timeout=20) as client:
         res = await client.get(
             "https://api.github.com/user/repos?per_page=100&sort=updated",
+<<<<<<< HEAD
 <<<<<<< HEAD
             headers=_auth_headers(gh_token),
         )
@@ -55,6 +62,8 @@ async def list_repositories(gh_token: str | None = Cookie(default=None)):
         raise HTTPException(status_code=502, detail="Failed to fetch repositories from GitHub.")
 
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
             headers={
                 "Accept": "application/vnd.github+json",
                 "Authorization": f"Bearer {gh_token}",
@@ -67,6 +76,9 @@ async def list_repositories(gh_token: str | None = Cookie(default=None)):
 
     # Return only fields the UI currently expects.
     repos = res.json()
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     return [
         {
@@ -75,14 +87,20 @@ async def list_repositories(gh_token: str | None = Cookie(default=None)):
             "full_name": r.get("full_name"),
             "default_branch": r.get("default_branch", "main"),
 <<<<<<< HEAD
+<<<<<<< HEAD
             "language": r.get("language"),
             "private": r.get("private", False),
         }
         for r in res.json()
     ]
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         }
         for r in repos
     ]
 
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

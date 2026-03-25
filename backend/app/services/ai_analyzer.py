@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 """AI service to analyze pipeline errors using Google Gemini."""
 from __future__ import annotations
 
@@ -23,6 +24,8 @@ Technology Stack:
 - Has Helm: {has_helm}
 - Has Terraform: {has_terraform}
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 """
 AI service to analyze pipeline errors and provide reasons and resolutions.
 Uses Google Gemini API.
@@ -83,6 +86,9 @@ Technology Stack:
     prompt = f"""You are a DevOps expert analyzing a CI/CD pipeline failure. 
 
 {tech_context}
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 Error Logs:
@@ -90,6 +96,7 @@ Error Logs:
 {error_logs}
 ```
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 Provide:
 1. A clear, concise reason for the failure (2-3 sentences).
@@ -176,6 +183,8 @@ def _parse_response(content: str) -> dict[str, str]:
 
     return {"reason": reason, "resolution": resolution}
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 Please provide:
 1. A clear, concise reason for why the pipeline failed (2-3 sentences)
 2. A step-by-step resolution to fix the issue (3-5 steps)
@@ -223,4 +232,7 @@ RESOLUTION: [your resolution steps here]
             "reason": f"AI analysis failed: {str(e)}",
             "resolution": "Please review the error logs manually. Common issues include: dependency installation failures, test failures, configuration errors, or infrastructure provisioning issues.",
         }
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

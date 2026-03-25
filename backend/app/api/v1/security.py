@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 from __future__ import annotations
 
 import logging
@@ -168,6 +169,8 @@ async def dast_results() -> DastResponse:
         logger.exception("ZAP request failed")
         raise HTTPException(status_code=502, detail=f"OWASP ZAP unreachable: {exc}") from exc
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 from fastapi import APIRouter
 
 router = APIRouter()
@@ -188,4 +191,7 @@ async def dast_results():
     """
     return {"alerts": []}
 
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

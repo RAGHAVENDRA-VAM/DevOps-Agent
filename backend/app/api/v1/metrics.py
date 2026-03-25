@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 from __future__ import annotations
 
 from datetime import date
@@ -9,10 +10,14 @@ from pydantic import BaseModel
 =======
 from fastapi import APIRouter
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
+from fastapi import APIRouter
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 router = APIRouter()
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 # ---------------------------------------------------------------------------
 # Pydantic response models
@@ -77,6 +82,8 @@ async def get_dora_metrics() -> DoraMetricsResponse:
         mttr=[],
     )
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 @router.get("/dora")
 async def get_dora_metrics():
     """
@@ -90,4 +97,7 @@ async def get_dora_metrics():
         "mttr": [],
     }
 
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

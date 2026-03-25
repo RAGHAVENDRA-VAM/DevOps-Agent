@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import logging
 import os
 import secrets
@@ -74,6 +75,8 @@ async def github_oauth_callback(code: str, state: str, request: Request) -> Redi
         token_res = await client.post(
             _GITHUB_TOKEN_URL,
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 import os
 
 import httpx
@@ -120,6 +123,9 @@ async def github_oauth_callback(code: str):
     async with httpx.AsyncClient(timeout=15) as client:
         token_res = await client.post(
             token_url,
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
             headers={"Accept": "application/json"},
             data={
@@ -131,7 +137,11 @@ async def github_oauth_callback(code: str):
 
     if token_res.status_code >= 400:
 <<<<<<< HEAD
+<<<<<<< HEAD
         raise HTTPException(status_code=502, detail="Failed to exchange GitHub OAuth code.")
+=======
+        raise HTTPException(status_code=502, detail="Failed to exchange GitHub OAuth code")
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 =======
         raise HTTPException(status_code=502, detail="Failed to exchange GitHub OAuth code")
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
@@ -139,6 +149,7 @@ async def github_oauth_callback(code: str):
     payload = token_res.json()
     access_token = payload.get("access_token")
     if not access_token:
+<<<<<<< HEAD
 <<<<<<< HEAD
         raise HTTPException(status_code=502, detail="GitHub OAuth token missing in response.")
 
@@ -149,10 +160,16 @@ async def github_oauth_callback(code: str):
 
     response = RedirectResponse(url="http://localhost:5173/repos", status_code=302)
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
+        raise HTTPException(status_code=502, detail="GitHub OAuth token missing in response")
+
+    response = RedirectResponse(url="http://localhost:5173/repos", status_code=302)
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     response.set_cookie(
         key="gh_token",
         value=access_token,
         httponly=True,
+<<<<<<< HEAD
 <<<<<<< HEAD
         secure=_COOKIE_SECURE,
         samesite="lax",
@@ -160,36 +177,53 @@ async def github_oauth_callback(code: str):
     )
     response.delete_cookie("oauth_state")
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         secure=False,  # set True behind HTTPS
         samesite="lax",
         max_age=60 * 60,
     )
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     return response
 
 
 @router.get("/me")
 <<<<<<< HEAD
+<<<<<<< HEAD
 async def get_current_user() -> dict[str, str]:
     """Return the current authenticated user identity (stub)."""
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 async def get_current_user():
     """
     Placeholder for returning the current authenticated user.
     In production, this would validate a session/JWT and fetch user info from GitHub or DB.
     """
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     return {"username": "demo-user", "provider": "github"}
 
 
 @router.get("/favicon.ico", include_in_schema=False)
 <<<<<<< HEAD
+<<<<<<< HEAD
 async def favicon() -> Response:
     """Suppress noisy 404s from browser favicon requests during OAuth redirects."""
     return Response(status_code=204)
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 async def favicon():
     # Avoid noisy 404s when the browser requests /favicon.ico from the backend during OAuth redirects.
     return Response(status_code=204)
 
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

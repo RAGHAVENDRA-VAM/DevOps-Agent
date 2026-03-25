@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import asyncio
 import logging
 import os
@@ -42,6 +43,8 @@ from azure.mgmt.web.models import AppServicePlan, Site, SiteConfig, SkuDescripti
 from fastapi import APIRouter, Cookie, HTTPException
 from pydantic import BaseModel
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 import os
 import logging
 import random
@@ -69,11 +72,15 @@ from azure.mgmt.network.models import (
     NetworkInterfaceIPConfiguration, PublicIPAddress
 )
 from azure.core.exceptions import AzureError
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 _SKU_TIER_MAP: dict[str, str] = {
     "F1": "Free",
@@ -88,6 +95,8 @@ _SKU_TIER_MAP: dict[str, str] = {
 # ---------------------------------------------------------------------------
 =======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 class InfrastructureProvisionRequest(BaseModel):
     repoFullName: str
@@ -95,6 +104,7 @@ class InfrastructureProvisionRequest(BaseModel):
     infrastructure: dict
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -113,6 +123,8 @@ def _get_azure_credential() -> tuple[ClientSecretCredential, str]:
             "Set AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, "
             "and AZURE_SUBSCRIPTION_ID."
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 def _get_credential():
     client_id = os.getenv("AZURE_CLIENT_ID")
     client_secret = os.getenv("AZURE_CLIENT_SECRET")
@@ -123,11 +135,15 @@ def _get_credential():
         raise HTTPException(
             status_code=503,
             detail="Azure credentials not configured. Set AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID in .env"
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         )
     return ClientSecretCredential(tenant_id, client_id, client_secret), subscription_id
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 def _unique_name(base: str) -> str:
     """Append a 5-character random suffix for global uniqueness."""
@@ -222,6 +238,8 @@ def _provision_web_app_sync(
 
     logger.info("Web App '%s' created at %s", app_name, app.default_host_name)
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 def _unique_name(name: str) -> str:
     """Append a short random suffix to ensure global uniqueness."""
     suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
@@ -285,6 +303,9 @@ def _provision_web_app_sync(credential, subscription_id: str, rg_name: str, name
         raise AzureError(f"Could not create Web App after 3 attempts — all names taken")
 
     logger.info("Web App created: %s", app.default_host_name)
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     return {
         "status": "created",
@@ -297,6 +318,7 @@ def _provision_web_app_sync(credential, subscription_id: str, rg_name: str, name
     }
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 def _provision_aks_sync(
     credential: ClientSecretCredential,
@@ -315,6 +337,8 @@ def _provision_aks_sync(
         rg_name,
         cluster_name,
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 def _provision_aks_sync(credential, subscription_id: str, rg_name: str, name: str, location: str, node_count: int, node_size: str) -> dict:
     aks_client = ContainerServiceClient(credential, subscription_id)
     cluster_name = _unique_name(f"{name}-aks")
@@ -322,6 +346,9 @@ def _provision_aks_sync(credential, subscription_id: str, rg_name: str, name: st
     logger.info("Creating AKS cluster: %s nodes=%d size=%s", cluster_name, node_count, node_size)
     poller = aks_client.managed_clusters.begin_create_or_update(
         rg_name, cluster_name,
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         ManagedCluster(
             location=location,
@@ -336,14 +363,20 @@ def _provision_aks_sync(credential, subscription_id: str, rg_name: str, name: st
             ],
             identity={"type": "SystemAssigned"},
 <<<<<<< HEAD
+<<<<<<< HEAD
         ),
     ).result()
     logger.info("AKS cluster '%s' created", cluster.name)
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         )
     )
     cluster = poller.result()
     logger.info("AKS cluster created: %s", cluster.name)
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
     return {
@@ -359,6 +392,7 @@ def _provision_aks_sync(credential, subscription_id: str, rg_name: str, name: st
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 def _provision_vm_sync(
     credential: ClientSecretCredential,
     subscription_id: str,
@@ -371,6 +405,9 @@ def _provision_vm_sync(
 =======
 def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str, location: str, vm_size: str, admin_user: str) -> dict:
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
+def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str, location: str, vm_size: str, admin_user: str) -> dict:
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     network_client = NetworkManagementClient(credential, subscription_id)
     compute_client = ComputeManagementClient(credential, subscription_id)
 
@@ -380,6 +417,7 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
     nic_name = f"{name}-nic"
     vm_name = f"{name}-vm"
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     logger.info("Creating VNet '%s'", vnet_name)
     network_client.virtual_networks.begin_create_or_update(
@@ -430,6 +468,8 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
         rg_name,
         vm_name,
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     logger.info("Creating VNet: %s", vnet_name)
     vnet_poller = network_client.virtual_networks.begin_create_or_update(
         rg_name, vnet_name,
@@ -468,12 +508,16 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
     logger.info("Creating VM: %s size=%s", vm_name, vm_size)
     vm_poller = compute_client.virtual_machines.begin_create_or_update(
         rg_name, vm_name,
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         VirtualMachine(
             location=location,
             hardware_profile=HardwareProfile(vm_size=vm_size),
             storage_profile=StorageProfile(
                 image_reference=ImageReference(
+<<<<<<< HEAD
 <<<<<<< HEAD
                     publisher="Canonical",
                     offer="0001-com-ubuntu-server-jammy",
@@ -484,12 +528,17 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
                     create_option="FromImage",
                     managed_disk=ManagedDiskParameters(storage_account_type="Standard_LRS"),
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
                     publisher="Canonical", offer="0001-com-ubuntu-server-jammy",
                     sku="22_04-lts", version="latest"
                 ),
                 os_disk=OSDisk(
                     create_option="FromImage",
                     managed_disk=ManagedDiskParameters(storage_account_type="Standard_LRS")
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
                 ),
             ),
@@ -497,18 +546,25 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
                 computer_name=vm_name,
                 admin_username=admin_user,
 <<<<<<< HEAD
+<<<<<<< HEAD
                 linux_configuration=LinuxConfiguration(disable_password_authentication=False),
                 admin_password=admin_password,
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
                 linux_configuration=LinuxConfiguration(
                     disable_password_authentication=False,
                 ),
                 admin_password="DevOpsAgent@2024!",  # In production use Key Vault
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
             ),
             network_profile=NetworkProfile(
                 network_interfaces=[NetworkInterfaceReference(id=nic.id, primary=True)]
             ),
+<<<<<<< HEAD
 <<<<<<< HEAD
         ),
     ).result()
@@ -516,6 +572,8 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
 
     pip_result = network_client.public_ip_addresses.get(rg_name, pip_name)
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         )
     )
     vm = vm_poller.result()
@@ -523,6 +581,9 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
 
     pip_result = network_client.public_ip_addresses.get(rg_name, pip_name)
 
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     return {
         "status": "created",
@@ -536,6 +597,7 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
     }
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 # ---------------------------------------------------------------------------
 # Route handler
@@ -603,6 +665,8 @@ async def provision_infrastructure(
         logger.exception("Unexpected error during provisioning")
         raise HTTPException(status_code=500, detail=f"Provisioning failed: {exc}") from exc
 =======
+=======
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 @router.post("/provision")
 async def provision_infrastructure(
     payload: InfrastructureProvisionRequest, gh_token: str | None = Cookie(default=None)
@@ -652,4 +716,7 @@ async def provision_infrastructure(
     except Exception as e:
         logger.exception("Unexpected error during provisioning")
         raise HTTPException(status_code=500, detail=f"Provisioning failed: {str(e)}")
+<<<<<<< HEAD
+>>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+=======
 >>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
