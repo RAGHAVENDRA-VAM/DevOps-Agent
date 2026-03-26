@@ -44,16 +44,16 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     - name: Provision Resource Group
-      run: az group create --name my-app-rg --location eastus
+      run: az group create --name vsd --location eastus
     - name: Provision App Service Plan
       run: az appservice plan create --name ${{ secrets.AZURE_WEBAPP_NAME }}-plan
-        --resource-group my-app-rg --sku B1 --is-linux
+        --resource-group vsd --sku B1 --is-linux
     - name: Provision Web App
       run: az webapp create --name ${{ secrets.AZURE_WEBAPP_NAME }} --resource-group
-        my-app-rg --plan ${{ secrets.AZURE_WEBAPP_NAME }}-plan --runtime 'NODE:20-lts'
+        vsd --plan ${{ secrets.AZURE_WEBAPP_NAME }}-plan --runtime 'NODE:20-lts'
     - name: Set startup command
       run: az webapp config set --name ${{ secrets.AZURE_WEBAPP_NAME }} --resource-group
-        my-app-rg --startup-file 'npm start'
+        vsd --startup-file 'npm start'
     - name: Deploy to Azure Web App
       run: az webapp deploy --name ${{ secrets.AZURE_WEBAPP_NAME }} --resource-group
-        my-app-rg --src-path release.zip --type zip
+        vsd --src-path release.zip --type zip
