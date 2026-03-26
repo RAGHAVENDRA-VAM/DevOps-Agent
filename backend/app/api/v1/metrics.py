@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 from __future__ import annotations
 
 from datetime import date
@@ -7,21 +5,9 @@ from typing import Literal
 
 from fastapi import APIRouter
 from pydantic import BaseModel
-=======
-from fastapi import APIRouter
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
-from fastapi import APIRouter
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 router = APIRouter()
 
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-# ---------------------------------------------------------------------------
-# Pydantic response models
-# ---------------------------------------------------------------------------
 
 class DeploymentFrequencyPoint(BaseModel):
     date: str
@@ -48,32 +34,22 @@ class DoraMetricsResponse(BaseModel):
     lead_time: list[LeadTimePoint]
     change_failure_rate: list[ChangeFailureRatePoint]
     mttr: list[MttrPoint]
-    # Elite / High / Medium / Low classification per DORA research
     deployment_frequency_band: Literal["elite", "high", "medium", "low"] = "low"
     lead_time_band: Literal["elite", "high", "medium", "low"] = "low"
     change_failure_rate_band: Literal["elite", "high", "medium", "low"] = "low"
     mttr_band: Literal["elite", "high", "medium", "low"] = "low"
 
 
-# ---------------------------------------------------------------------------
-# Route handlers
-# ---------------------------------------------------------------------------
-
-@router.get("/dora", response_model=DoraMetricsResponse)
+@router.get("/dora", response_model=DoraMetricsResponse, summary="Get DORA metrics")
 async def get_dora_metrics() -> DoraMetricsResponse:
     """
-    DORA metrics endpoint.
+    DORA metrics endpoint — returns the four key DevOps Research and Assessment metrics.
 
-    Returns the four key DORA metrics with performance band classification.
-
-    Real implementation should:
-    - Aggregate deployment events from the approvals store (or a DB).
-    - Calculate lead time from first commit to production deploy.
-    - Track change failure rate from failed pipeline conclusions.
-    - Calculate MTTR from failure detection to recovery deploy.
-
-    Currently returns empty series — wire to a persistent store (PostgreSQL /
-    SQLite via SQLAlchemy) to populate real data.
+    Currently returns empty series. Wire to the approvals/deployments store to populate real data:
+    - deployment_frequency: count of successful deploys per day
+    - lead_time: hours from first commit to production deploy
+    - change_failure_rate: ratio of failed deploys
+    - mttr: hours from failure detection to recovery
     """
     return DoraMetricsResponse(
         deployment_frequency=[],
@@ -81,23 +57,3 @@ async def get_dora_metrics() -> DoraMetricsResponse:
         change_failure_rate=[],
         mttr=[],
     )
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-@router.get("/dora")
-async def get_dora_metrics():
-    """
-    Stub endpoint for DORA metrics.
-    Real implementation should aggregate data from pipeline and deployment events.
-    """
-    return {
-        "deploymentFrequency": [],
-        "leadTime": [],
-        "changeFailureRate": [],
-        "mttr": [],
-    }
-
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

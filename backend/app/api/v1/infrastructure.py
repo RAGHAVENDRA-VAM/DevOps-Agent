@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 import asyncio
 import logging
 import os
@@ -42,46 +40,10 @@ from azure.mgmt.web import WebSiteManagementClient
 from azure.mgmt.web.models import AppServicePlan, Site, SiteConfig, SkuDescription
 from fastapi import APIRouter, Cookie, HTTPException
 from pydantic import BaseModel
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-import os
-import logging
-import random
-import string
-from fastapi import APIRouter, Cookie, HTTPException
-from pydantic import BaseModel
-
-from azure.identity import ClientSecretCredential
-from azure.mgmt.resource import ResourceManagementClient
-from azure.mgmt.web import WebSiteManagementClient
-from azure.mgmt.web.models import AppServicePlan, SkuDescription, Site, SiteConfig
-from azure.mgmt.containerservice import ContainerServiceClient
-from azure.mgmt.containerservice.models import (
-    ManagedCluster, ManagedClusterAgentPoolProfile, ManagedClusterServicePrincipalProfile
-)
-from azure.mgmt.compute import ComputeManagementClient
-from azure.mgmt.compute.models import (
-    VirtualMachine, HardwareProfile, StorageProfile, OSDisk, ImageReference,
-    OSProfile, NetworkProfile, NetworkInterfaceReference, ManagedDiskParameters,
-    LinuxConfiguration, SshConfiguration, SshPublicKey
-)
-from azure.mgmt.network import NetworkManagementClient
-from azure.mgmt.network.models import (
-    VirtualNetwork, AddressSpace, Subnet, NetworkInterface,
-    NetworkInterfaceIPConfiguration, PublicIPAddress
-)
-from azure.core.exceptions import AzureError
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 _SKU_TIER_MAP: dict[str, str] = {
     "F1": "Free",
     "B1": "Basic", "B2": "Basic", "B3": "Basic",
@@ -90,28 +52,14 @@ _SKU_TIER_MAP: dict[str, str] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Pydantic models
-# ---------------------------------------------------------------------------
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-
 class InfrastructureProvisionRequest(BaseModel):
     repoFullName: str
     branch: str
     infrastructure: dict
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-# ---------------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------------
-
 def _get_azure_credential() -> tuple[ClientSecretCredential, str]:
-    """Build Azure credential from environment variables or raise 503."""
+    """Build Azure credential from environment variables or raise RuntimeError."""
     client_id = os.getenv("AZURE_CLIENT_ID", "")
     client_secret = os.getenv("AZURE_CLIENT_SECRET", "")
     tenant_id = os.getenv("AZURE_TENANT_ID", "")
@@ -120,33 +68,12 @@ def _get_azure_credential() -> tuple[ClientSecretCredential, str]:
     if not all([client_id, client_secret, tenant_id, subscription_id]):
         raise RuntimeError(
             "Azure credentials not configured. "
-            "Set AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, "
-            "and AZURE_SUBSCRIPTION_ID."
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-def _get_credential():
-    client_id = os.getenv("AZURE_CLIENT_ID")
-    client_secret = os.getenv("AZURE_CLIENT_SECRET")
-    tenant_id = os.getenv("AZURE_TENANT_ID")
-    subscription_id = os.getenv("AZURE_SUBSCRIPTION_ID")
-
-    if not all([client_id, client_secret, tenant_id, subscription_id]):
-        raise HTTPException(
-            status_code=503,
-            detail="Azure credentials not configured. Set AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID in .env"
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+            "Set AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID."
         )
     return ClientSecretCredential(tenant_id, client_id, client_secret), subscription_id
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 def _unique_name(base: str) -> str:
-    """Append a 5-character random suffix for global uniqueness."""
     suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=5))
     return f"{base}-{suffix}"
 
@@ -162,10 +89,6 @@ def _ensure_resource_group(
     rg_client.resource_groups.create_or_update(rg_name, {"location": location})
     logger.info("Resource group '%s' ready", rg_name)
 
-
-# ---------------------------------------------------------------------------
-# Provisioning functions (synchronous — called via asyncio.to_thread)
-# ---------------------------------------------------------------------------
 
 def _provision_web_app_sync(
     credential: ClientSecretCredential,
@@ -195,7 +118,6 @@ def _provision_web_app_sync(
     logger.info("App Service Plan '%s' created", plan.name)
 
     app_name = name
-    # Check if app already exists to avoid creating duplicates on re-runs
     try:
         existing = web_client.web_apps.get(rg_name, app_name)
         logger.info("Web App '%s' already exists, skipping creation", app_name)
@@ -209,7 +131,7 @@ def _provision_web_app_sync(
             "app_service_plan": plan_name,
         }
     except Exception:
-        pass  # doesn't exist yet, proceed to create
+        pass
 
     for attempt in range(3):
         try:
@@ -220,10 +142,7 @@ def _provision_web_app_sync(
                 Site(
                     location=location,
                     server_farm_id=plan.id,
-                    site_config=SiteConfig(
-                        linux_fx_version=linux_fx_version,
-                        app_command_line="pm2 serve /home/site/wwwroot --no-daemon --spa" if "NODE" in linux_fx_version else "",
-                    ),
+                    site_config=SiteConfig(linux_fx_version=linux_fx_version),
                 ),
             ).result()
             break
@@ -237,76 +156,6 @@ def _provision_web_app_sync(
         raise AzureError("Could not create Web App after 3 attempts — all names taken.")
 
     logger.info("Web App '%s' created at %s", app_name, app.default_host_name)
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-def _unique_name(name: str) -> str:
-    """Append a short random suffix to ensure global uniqueness."""
-    suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
-    return f"{name}-{suffix}"
-
-
-def _ensure_resource_group(credential, subscription_id: str, rg_name: str, location: str):
-    rg_client = ResourceManagementClient(credential, subscription_id)
-    logger.info("Creating/verifying resource group: %s in %s", rg_name, location)
-    rg = rg_client.resource_groups.create_or_update(rg_name, {"location": location})
-    logger.info("Resource group ready: %s", rg.name)
-    return rg
-
-
-def _provision_web_app_sync(credential, subscription_id: str, rg_name: str, name: str, location: str, sku: str) -> dict:
-    web_client = WebSiteManagementClient(credential, subscription_id)
-    plan_name = f"{name}-plan"
-    sku_code = sku.split()[0] if " " in sku else sku
-
-    tier_map = {
-        "F1": "Free", "B1": "Basic", "B2": "Basic", "B3": "Basic",
-        "S1": "Standard", "S2": "Standard", "S3": "Standard",
-        "P1v3": "PremiumV3", "P2v3": "PremiumV3",
-    }
-    tier = tier_map.get(sku_code, "Basic")
-
-    logger.info("Creating App Service Plan: %s sku=%s", plan_name, sku_code)
-    plan_poller = web_client.app_service_plans.begin_create_or_update(
-        rg_name, plan_name,
-        AppServicePlan(
-            location=location,
-            sku=SkuDescription(name=sku_code, tier=tier),
-            reserved=True,
-        )
-    )
-    plan = plan_poller.result()
-    logger.info("App Service Plan created: %s", plan.name)
-
-    # Web App names are globally unique across Azure — append suffix if conflict
-    app_name = name
-    for attempt in range(3):
-        try:
-            logger.info("Creating Web App: %s (attempt %d)", app_name, attempt + 1)
-            app_poller = web_client.web_apps.begin_create_or_update(
-                rg_name, app_name,
-                Site(
-                    location=location,
-                    server_farm_id=plan.id,
-                    site_config=SiteConfig(linux_fx_version=""),
-                )
-            )
-            app = app_poller.result()
-            break
-        except AzureError as e:
-            if "already exists" in str(e) or "Conflict" in str(e):
-                app_name = _unique_name(name)
-                logger.warning("Name conflict, retrying with: %s", app_name)
-            else:
-                raise
-    else:
-        raise AzureError(f"Could not create Web App after 3 attempts — all names taken")
-
-    logger.info("Web App created: %s", app.default_host_name)
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     return {
         "status": "created",
         "infrastructure_type": "azure-web-app",
@@ -318,8 +167,6 @@ def _provision_web_app_sync(credential, subscription_id: str, rg_name: str, name
     }
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 def _provision_aks_sync(
     credential: ClientSecretCredential,
     subscription_id: str,
@@ -336,20 +183,6 @@ def _provision_aks_sync(
     cluster = aks_client.managed_clusters.begin_create_or_update(
         rg_name,
         cluster_name,
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-def _provision_aks_sync(credential, subscription_id: str, rg_name: str, name: str, location: str, node_count: int, node_size: str) -> dict:
-    aks_client = ContainerServiceClient(credential, subscription_id)
-    cluster_name = _unique_name(f"{name}-aks")
-
-    logger.info("Creating AKS cluster: %s nodes=%d size=%s", cluster_name, node_count, node_size)
-    poller = aks_client.managed_clusters.begin_create_or_update(
-        rg_name, cluster_name,
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         ManagedCluster(
             location=location,
             dns_prefix=name,
@@ -362,22 +195,9 @@ def _provision_aks_sync(credential, subscription_id: str, rg_name: str, name: st
                 )
             ],
             identity={"type": "SystemAssigned"},
-<<<<<<< HEAD
-<<<<<<< HEAD
         ),
     ).result()
     logger.info("AKS cluster '%s' created", cluster.name)
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-        )
-    )
-    cluster = poller.result()
-    logger.info("AKS cluster created: %s", cluster.name)
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
     return {
         "status": "created",
@@ -391,8 +211,6 @@ def _provision_aks_sync(credential, subscription_id: str, rg_name: str, name: st
     }
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 def _provision_vm_sync(
     credential: ClientSecretCredential,
     subscription_id: str,
@@ -402,12 +220,6 @@ def _provision_vm_sync(
     vm_size: str,
     admin_user: str,
 ) -> dict:
-=======
-def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str, location: str, vm_size: str, admin_user: str) -> dict:
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
-def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str, location: str, vm_size: str, admin_user: str) -> dict:
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     network_client = NetworkManagementClient(credential, subscription_id)
     compute_client = ComputeManagementClient(credential, subscription_id)
 
@@ -417,12 +229,9 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
     nic_name = f"{name}-nic"
     vm_name = f"{name}-vm"
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     logger.info("Creating VNet '%s'", vnet_name)
     network_client.virtual_networks.begin_create_or_update(
-        rg_name,
-        vnet_name,
+        rg_name, vnet_name,
         VirtualNetwork(location=location, address_space=AddressSpace(address_prefixes=["10.0.0.0/16"])),
     ).result()
 
@@ -431,18 +240,12 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
     ).result()
 
     pip = network_client.public_ip_addresses.begin_create_or_update(
-        rg_name,
-        pip_name,
-        PublicIPAddress(
-            location=location,
-            public_ip_allocation_method="Static",
-            sku={"name": "Standard"},
-        ),
+        rg_name, pip_name,
+        PublicIPAddress(location=location, public_ip_allocation_method="Static", sku={"name": "Standard"}),
     ).result()
 
     nic = network_client.network_interfaces.begin_create_or_update(
-        rg_name,
-        nic_name,
+        rg_name, nic_name,
         NetworkInterface(
             location=location,
             ip_configurations=[
@@ -455,70 +258,18 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
         ),
     ).result()
 
-    # Admin password sourced from environment — never hardcoded
     admin_password = os.getenv("VM_ADMIN_PASSWORD", "")
     if not admin_password:
-        raise RuntimeError(
-            "VM_ADMIN_PASSWORD environment variable is not set. "
-            "Set it before provisioning a VM."
-        )
+        raise RuntimeError("VM_ADMIN_PASSWORD environment variable is not set.")
 
     logger.info("Creating VM '%s' size=%s", vm_name, vm_size)
     compute_client.virtual_machines.begin_create_or_update(
-        rg_name,
-        vm_name,
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-    logger.info("Creating VNet: %s", vnet_name)
-    vnet_poller = network_client.virtual_networks.begin_create_or_update(
-        rg_name, vnet_name,
-        VirtualNetwork(location=location, address_space=AddressSpace(address_prefixes=["10.0.0.0/16"]))
-    )
-    vnet_poller.result()
-
-    logger.info("Creating Subnet")
-    subnet_poller = network_client.subnets.begin_create_or_update(
-        rg_name, vnet_name, subnet_name,
-        Subnet(address_prefix="10.0.1.0/24")
-    )
-    subnet = subnet_poller.result()
-
-    logger.info("Creating Public IP")
-    pip_poller = network_client.public_ip_addresses.begin_create_or_update(
-        rg_name, pip_name,
-        PublicIPAddress(location=location, public_ip_allocation_method="Static", sku={"name": "Standard"})
-    )
-    pip = pip_poller.result()
-
-    logger.info("Creating NIC")
-    nic_poller = network_client.network_interfaces.begin_create_or_update(
-        rg_name, nic_name,
-        NetworkInterface(
-            location=location,
-            ip_configurations=[NetworkInterfaceIPConfiguration(
-                name="ipconfig1",
-                subnet={"id": subnet.id},
-                public_ip_address={"id": pip.id},
-            )]
-        )
-    )
-    nic = nic_poller.result()
-
-    logger.info("Creating VM: %s size=%s", vm_name, vm_size)
-    vm_poller = compute_client.virtual_machines.begin_create_or_update(
         rg_name, vm_name,
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
         VirtualMachine(
             location=location,
             hardware_profile=HardwareProfile(vm_size=vm_size),
             storage_profile=StorageProfile(
                 image_reference=ImageReference(
-<<<<<<< HEAD
-<<<<<<< HEAD
                     publisher="Canonical",
                     offer="0001-com-ubuntu-server-jammy",
                     sku="22_04-lts",
@@ -527,64 +278,22 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
                 os_disk=OSDisk(
                     create_option="FromImage",
                     managed_disk=ManagedDiskParameters(storage_account_type="Standard_LRS"),
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-                    publisher="Canonical", offer="0001-com-ubuntu-server-jammy",
-                    sku="22_04-lts", version="latest"
-                ),
-                os_disk=OSDisk(
-                    create_option="FromImage",
-                    managed_disk=ManagedDiskParameters(storage_account_type="Standard_LRS")
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
                 ),
             ),
             os_profile=OSProfile(
                 computer_name=vm_name,
                 admin_username=admin_user,
-<<<<<<< HEAD
-<<<<<<< HEAD
                 linux_configuration=LinuxConfiguration(disable_password_authentication=False),
                 admin_password=admin_password,
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-                linux_configuration=LinuxConfiguration(
-                    disable_password_authentication=False,
-                ),
-                admin_password="DevOpsAgent@2024!",  # In production use Key Vault
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
             ),
             network_profile=NetworkProfile(
                 network_interfaces=[NetworkInterfaceReference(id=nic.id, primary=True)]
             ),
-<<<<<<< HEAD
-<<<<<<< HEAD
         ),
     ).result()
     logger.info("VM '%s' created", vm_name)
 
     pip_result = network_client.public_ip_addresses.get(rg_name, pip_name)
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-        )
-    )
-    vm = vm_poller.result()
-    logger.info("VM created: %s", vm.name)
-
-    pip_result = network_client.public_ip_addresses.get(rg_name, pip_name)
-
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
     return {
         "status": "created",
         "infrastructure_type": "vm",
@@ -597,18 +306,25 @@ def _provision_vm_sync(credential, subscription_id: str, rg_name: str, name: str
     }
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-# ---------------------------------------------------------------------------
-# Route handler
-# ---------------------------------------------------------------------------
-
-@router.post("/provision")
+@router.post("/provision", summary="Provision Azure infrastructure")
 async def provision_infrastructure(
     payload: InfrastructureProvisionRequest,
     gh_token: str | None = Cookie(default=None),
 ) -> dict:
-    """Provision Azure infrastructure based on the requested type."""
+    """
+    Provision Azure infrastructure based on the requested type.
+
+    Supported types:
+    - `azure-web-app`: Azure App Service (Linux)
+    - `aks`: Azure Kubernetes Service
+    - `vm`: Azure Virtual Machine (Ubuntu 22.04)
+
+    Required fields in `infrastructure`:
+    - `type`: one of the above
+    - `resourceGroup`: Azure resource group name
+    - `name`: resource name
+    - `region`: Azure region (default: eastus)
+    """
     if not gh_token:
         raise HTTPException(status_code=401, detail="Not authenticated with GitHub.")
 
@@ -618,9 +334,9 @@ async def provision_infrastructure(
     name: str = config.get("name", "").strip()
     location: str = config.get("region", "eastus")
 
-    safe_rg   = resource_group.replace('\n', '').replace('\r', '')[:100]
-    safe_name = name.replace('\n', '').replace('\r', '')[:100]
-    safe_loc  = location.replace('\n', '').replace('\r', '')[:50]
+    safe_rg = resource_group.replace("\n", "").replace("\r", "")[:100]
+    safe_name = name.replace("\n", "").replace("\r", "")[:100]
+    safe_loc = location.replace("\n", "").replace("\r", "")[:50]
 
     if not resource_group or not name:
         raise HTTPException(status_code=400, detail="'resourceGroup' and 'name' are required.")
@@ -664,59 +380,3 @@ async def provision_infrastructure(
     except Exception as exc:
         logger.exception("Unexpected error during provisioning")
         raise HTTPException(status_code=500, detail=f"Provisioning failed: {exc}") from exc
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-@router.post("/provision")
-async def provision_infrastructure(
-    payload: InfrastructureProvisionRequest, gh_token: str | None = Cookie(default=None)
-):
-    if not gh_token:
-        raise HTTPException(status_code=401, detail="Not authenticated with GitHub")
-
-    config = payload.infrastructure
-    infra_type = config.get("type", "azure-web-app")
-    resource_group = config.get("resourceGroup", "").strip()
-    name = config.get("name", "").strip()
-    location = config.get("region", "eastus")
-
-    if not resource_group or not name:
-        raise HTTPException(status_code=400, detail="resourceGroup and name are required")
-
-    try:
-        credential, subscription_id = _get_credential()
-
-        # Step 1: Ensure resource group exists
-        _ensure_resource_group(credential, subscription_id, resource_group, location)
-
-        # Step 2: Create the requested resource (run in thread — Azure SDK is sync)
-        import asyncio
-        if infra_type == "azure-web-app":
-            sku = config.get("sku", "B1")
-            return await asyncio.to_thread(_provision_web_app_sync, credential, subscription_id, resource_group, name, location, sku)
-
-        elif infra_type == "aks":
-            node_count = int(config.get("nodeCount", 2))
-            node_size = config.get("nodeSize", "Standard_D2s_v3")
-            return await asyncio.to_thread(_provision_aks_sync, credential, subscription_id, resource_group, name, location, node_count, node_size)
-
-        elif infra_type == "vm":
-            vm_size = config.get("size", "Standard_B2s")
-            admin_user = config.get("adminUser", "azureuser")
-            return await asyncio.to_thread(_provision_vm_sync, credential, subscription_id, resource_group, name, location, vm_size, admin_user)
-
-        else:
-            raise HTTPException(status_code=400, detail=f"Unknown infrastructure type: {infra_type}")
-
-    except HTTPException:
-        raise
-    except AzureError as e:
-        logger.exception("Azure error during provisioning")
-        raise HTTPException(status_code=502, detail=f"Azure error: {str(e)}")
-    except Exception as e:
-        logger.exception("Unexpected error during provisioning")
-        raise HTTPException(status_code=500, detail=f"Provisioning failed: {str(e)}")
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

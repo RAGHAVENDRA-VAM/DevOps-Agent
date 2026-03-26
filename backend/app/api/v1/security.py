@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 from __future__ import annotations
 
 import logging
@@ -14,10 +12,6 @@ from app.config import get_settings
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-
-# ---------------------------------------------------------------------------
-# Pydantic response models
-# ---------------------------------------------------------------------------
 
 class SastIssue(BaseModel):
     key: str
@@ -53,30 +47,19 @@ class DastResponse(BaseModel):
     zap_url: str | None = None
 
 
-# ---------------------------------------------------------------------------
-# Route handlers
-# ---------------------------------------------------------------------------
-
-@router.get("/sast", response_model=SastResponse)
+@router.get("/sast", response_model=SastResponse, summary="Get SAST results from SonarQube")
 async def sast_results() -> SastResponse:
     """
     Fetch SAST results from SonarQube.
 
-    Requires SONAR_HOST_URL, SONAR_TOKEN, and SONAR_PROJECT_KEY_PREFIX
-    environment variables. Returns empty results when not configured.
-
-    Production integration:
-      GET {SONAR_HOST_URL}/api/issues/search?projectKeys={key}&resolved=false
+    Requires SONAR_HOST_URL, SONAR_TOKEN environment variables.
+    Returns empty results when not configured.
     """
     settings = get_settings()
 
     if not settings.sonar_host_url or not settings.sonar_token:
         logger.info("SonarQube not configured — returning empty SAST results")
-        return SastResponse(
-            issues=[],
-            quality_gate="NONE",
-            total_issues=0,
-        )
+        return SastResponse(issues=[], quality_gate="NONE", total_issues=0)
 
     try:
         async with httpx.AsyncClient(timeout=15) as client:
@@ -112,28 +95,19 @@ async def sast_results() -> SastResponse:
         raise HTTPException(status_code=502, detail=f"SonarQube unreachable: {exc}") from exc
 
 
-@router.get("/dast", response_model=DastResponse)
+@router.get("/dast", response_model=DastResponse, summary="Get DAST results from OWASP ZAP")
 async def dast_results() -> DastResponse:
     """
     Fetch DAST results from OWASP ZAP.
 
     Requires ZAP_BASE_URL and ZAP_API_KEY environment variables.
     Returns empty results when not configured.
-
-    Production integration:
-      GET {ZAP_BASE_URL}/JSON/alert/view/alerts/?apikey={key}
     """
     settings = get_settings()
 
     if not settings.zap_base_url or not settings.zap_api_key:
         logger.info("OWASP ZAP not configured — returning empty DAST results")
-        return DastResponse(
-            alerts=[],
-            total_alerts=0,
-            high_risk=0,
-            medium_risk=0,
-            low_risk=0,
-        )
+        return DastResponse(alerts=[], total_alerts=0, high_risk=0, medium_risk=0, low_risk=0)
 
     try:
         async with httpx.AsyncClient(timeout=15) as client:
@@ -168,30 +142,3 @@ async def dast_results() -> DastResponse:
     except httpx.HTTPError as exc:
         logger.exception("ZAP request failed")
         raise HTTPException(status_code=502, detail=f"OWASP ZAP unreachable: {exc}") from exc
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-from fastapi import APIRouter
-
-router = APIRouter()
-
-
-@router.get("/sast")
-async def sast_results():
-    """
-    Stub endpoint for SAST results from SonarQube.
-    """
-    return {"issues": [], "qualityGate": "UNKNOWN"}
-
-
-@router.get("/dast")
-async def dast_results():
-    """
-    Stub endpoint for DAST results from OWASP ZAP.
-    """
-    return {"alerts": []}
-
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

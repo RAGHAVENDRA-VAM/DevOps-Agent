@@ -8,11 +8,13 @@ from sqlalchemy.orm import DeclarativeBase
 
 _DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./devops_agent.db")
 
+_is_sqlite = "sqlite" in _DATABASE_URL
+_connect_args = {"check_same_thread": False} if _is_sqlite else {"ssl": "require"}
+
 engine = create_async_engine(
     _DATABASE_URL,
     echo=False,
-    # For SQLite only — ignored by Postgres
-    connect_args={"check_same_thread": False} if "sqlite" in _DATABASE_URL else {},
+    connect_args=_connect_args,
 )
 
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
@@ -36,12 +38,18 @@ async def create_tables() -> None:
         from sqlalchemy import text
 
         def _ensure_columns(sync_conn):
-            # Ensure all expected columns exist on the approvals table.
-            res = sync_conn.execute(text("PRAGMA table_info('approvals')")).fetchall()
-            existing = [r[1] for r in res]
+            # Fetch existing columns — works for both SQLite and PostgreSQL
+            if _is_sqlite:
+                res = sync_conn.execute(text("PRAGMA table_info('approvals')")).fetchall()
+                existing = [r[1] for r in res]
+            else:
+                res = sync_conn.execute(text(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_name='approvals'"
+                )).fetchall()
+                existing = [r[0] for r in res]
 
             expected: dict[str, tuple[str, str]] = {
-                # column: (sql_type, default_literal)
                 'changed_files': ('TEXT', "'[]'"),
                 'config': ('TEXT', "'{}'"),
                 'detected_tech': ('TEXT', "'{}'"),
@@ -52,24 +60,18 @@ async def create_tables() -> None:
                 'terraform_url': ('TEXT', 'NULL'),
                 'deployed_url': ('TEXT', 'NULL'),
                 'actions_run_url': ('TEXT', 'NULL'),
-                'created_at': ('REAL', '0'),
+                'created_at': ('REAL' if _is_sqlite else 'DOUBLE PRECISION', '0'),
             }
 
             for col, (col_type, default_val) in expected.items():
                 if col in existing:
                     continue
                 try:
-                    # Try to add column with a sensible default
                     if default_val == 'NULL':
                         sync_conn.execute(text(f"ALTER TABLE approvals ADD COLUMN {col} {col_type}"))
                     else:
                         sync_conn.execute(text(f"ALTER TABLE approvals ADD COLUMN {col} {col_type} DEFAULT {default_val}"))
                 except Exception:
-                    # Last resort: try adding as plain TEXT without default
-                    try:
-                        sync_conn.execute(text(f"ALTER TABLE approvals ADD COLUMN {col} TEXT"))
-                    except Exception:
-                        # If this fails, continue — we'll surface errors later when accessing the column
-                        pass
+                    pass
 
         await conn.run_sync(_ensure_columns)

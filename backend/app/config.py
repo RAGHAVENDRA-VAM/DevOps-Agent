@@ -1,31 +1,18 @@
 from __future__ import annotations
 
 import os
-<<<<<<< HEAD
-<<<<<<< HEAD
 from dataclasses import dataclass, field
 from functools import lru_cache
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
 
 from dotenv import load_dotenv
 
 
 def load_env() -> None:
-    """
-<<<<<<< HEAD
-<<<<<<< HEAD
-    Load variables from a .env file for local development only.
-    Production must use real environment variables or a secret manager.
-    Does not override already-set environment variables.
-    """
+    """Load .env for local development. Does not override already-set env vars."""
     load_dotenv()
 
 
 def get_required_env(name: str) -> str:
-    """Return env var value or raise if missing."""
     value = os.getenv(name)
     if not value:
         raise EnvironmentError(f"Required environment variable '{name}' is not set.")
@@ -33,17 +20,12 @@ def get_required_env(name: str) -> str:
 
 
 def get_env(name: str, default: str = "") -> str:
-    """Return env var value with optional default."""
     return os.getenv(name, default)
 
 
 @dataclass(frozen=True)
 class AppSettings:
-    """
-    Centralised, immutable application settings.
-    All values are read from environment variables at startup.
-    Use get_settings() to obtain the singleton instance.
-    """
+    """Immutable application settings — all values from environment variables."""
 
     # Server
     frontend_url: str = field(default_factory=lambda: os.getenv("FRONTEND_URL", "http://localhost:5173"))
@@ -97,20 +79,3 @@ class AppSettings:
 def get_settings() -> AppSettings:
     """Return the cached application settings singleton."""
     return AppSettings()
-=======
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-    Local-dev convenience: load variables from a .env file if present.
-    Production should use real environment variables / secret managers instead.
-    """
-    # Only loads if file exists; does not override already-set environment variables by default.
-    load_dotenv()
-
-
-def get_env(name: str) -> str | None:
-    return os.getenv(name)
-
-<<<<<<< HEAD
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374

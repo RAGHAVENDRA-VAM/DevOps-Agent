@@ -1,31 +1,27 @@
 from fastapi import APIRouter
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-from app.api.v1 import auth, github, analysis, pipelines, metrics, security, infrastructure, builds, approvals, webhook
-=======
-from app.api.v1 import auth, github, analysis, pipelines, metrics, security, infrastructure, builds
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
-from app.api.v1 import auth, github, analysis, pipelines, metrics, security, infrastructure, builds
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
+from app.api.v1 import (
+    analysis,
+    approvals,
+    auth,
+    builds,
+    github,
+    infrastructure,
+    metrics,
+    pipelines,
+    security,
+    webhook,
+)
 
 router = APIRouter()
 
-router.include_router(auth.router, prefix="/auth", tags=["auth"])
-router.include_router(github.router, prefix="/github", tags=["github"])
-router.include_router(analysis.router, prefix="/analysis", tags=["analysis"])
-router.include_router(pipelines.router, prefix="/pipelines", tags=["pipelines"])
-router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
-router.include_router(security.router, prefix="/security", tags=["security"])
-router.include_router(infrastructure.router, prefix="/infrastructure", tags=["infrastructure"])
-router.include_router(builds.router, prefix="/builds", tags=["builds"])
-<<<<<<< HEAD
-<<<<<<< HEAD
-router.include_router(approvals.router, prefix="/approvals", tags=["approvals"])
-router.include_router(webhook.router, prefix="/webhooks", tags=["webhooks"])
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-=======
->>>>>>> 3a7c3ddc753b8fc8e40879fb1da83561691d7374
-
+router.include_router(auth.router,            prefix="/auth",           tags=["auth"])
+router.include_router(github.router,          prefix="/github",         tags=["github"])
+router.include_router(analysis.router,        prefix="/analysis",       tags=["analysis"])
+router.include_router(pipelines.router,       prefix="/pipelines",      tags=["pipelines"])
+router.include_router(metrics.router,         prefix="/metrics",        tags=["metrics"])
+router.include_router(security.router,        prefix="/security",       tags=["security"])
+router.include_router(infrastructure.router,  prefix="/infrastructure", tags=["infrastructure"])
+router.include_router(builds.router,          prefix="/builds",         tags=["builds"])
+router.include_router(approvals.router,       prefix="/approvals",      tags=["approvals"])
+router.include_router(webhook.router,         prefix="/webhooks",       tags=["webhooks"])
