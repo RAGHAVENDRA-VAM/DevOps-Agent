@@ -4,7 +4,10 @@ import os
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Session
+from sqlalchemy.orm import  DeclarativeBase
+from fastapi import Depends #type: ignore
+from typing import Annotated
 
 _DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./devops_agent.db")
 
@@ -28,7 +31,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         yield session
 
-
+db_dependency = Annotated[Session, Depends(get_db)]
 async def create_tables() -> None:
     """Create all tables on startup (idempotent)."""
     async with engine.begin() as conn:
