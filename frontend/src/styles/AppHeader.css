@@ -1,45 +1,44 @@
 /* AppHeader.css */
-
 .header-root {
-  background: rgba(10,14,26,0.95) !important;
-  border-bottom: 1px solid rgba(99,179,237,0.12) !important;
-  backdrop-filter: blur(10px);
+  background: linear-gradient(90deg, #00897b 0%, #00796b 100%) !important;
+  border-bottom: 1px solid rgba(0,105,92,0.2) !important;
+  box-shadow: 0 2px 8px rgba(0,105,92,0.2) !important;
 }
 
 .header-brand {
-  font-size: 14px !important;
+  font-size: 15px !important;
   font-weight: 700 !important;
-  color: #e2e8f0 !important;
+  color: #ffffff !important;
   letter-spacing: 0.5px;
   flex-grow: 1;
 }
 
 .header-nav-btn {
   border-radius: 0 !important;
-  padding: 4px 10px !important;
-  font-size: 12px !important;
+  padding: 4px 12px !important;
+  font-size: 13px !important;
 }
 .header-nav-btn.active {
-  color: #63b3ed !important;
+  color: #ffffff !important;
   font-weight: 700 !important;
-  border-bottom: 2px solid #63b3ed !important;
+  border-bottom: 2px solid #ffffff !important;
 }
 .header-nav-btn.inactive {
-  color: rgba(148,163,184,0.7) !important;
+  color: rgba(255,255,255,0.75) !important;
   font-weight: 400 !important;
   border-bottom: 2px solid transparent !important;
 }
 .header-nav-btn:hover {
-  color: #e2e8f0 !important;
-  background: transparent !important;
+  color: #ffffff !important;
+  background: rgba(255,255,255,0.1) !important;
 }
 
 .header-logout-btn {
-  border-color: rgba(239,68,68,0.4) !important;
-  color: #f87171 !important;
+  border-color: rgba(255,255,255,0.5) !important;
+  color: #ffffff !important;
   font-size: 12px !important;
 }
 .header-logout-btn:hover {
-  border-color: #ef4444 !important;
-  background: rgba(239,68,68,0.08) !important;
+  border-color: #ffffff !important;
+  background: rgba(255,255,255,0.12) !important;
 }

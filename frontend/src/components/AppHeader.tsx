@@ -10,6 +10,7 @@ interface NavTab {
 }
 
 const NAV_TABS: NavTab[] = [
+  { label: 'Dashboard',       path: '/dashboard'        },
   { label: 'Approvals',        path: '/approvals'        },
   { label: 'Repositories',     path: '/repos'            },
   { label: 'Deployments',      path: '/deployments'      },
@@ -31,7 +32,7 @@ export const AppHeader: React.FC = () => {
   };
 
   return (
-    <AppBar position="static" elevation={0} className="header-root">
+    <AppBar position="fixed" elevation={0} className="header-root">
       <Toolbar>
         <Typography className="header-brand">
           DevOps Agent

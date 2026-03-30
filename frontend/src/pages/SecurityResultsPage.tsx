@@ -68,25 +68,25 @@ interface DastResponse {
 // ---------------------------------------------------------------------------
 
 const SEVERITY_STYLE: Record<SastSeverity, { color: string; bg: string }> = {
-  BLOCKER:  { color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
-  CRITICAL: { color: '#fb923c', bg: 'rgba(251,146,60,0.12)'  },
-  MAJOR:    { color: '#fbbf24', bg: 'rgba(251,191,36,0.12)'  },
-  MINOR:    { color: '#63b3ed', bg: 'rgba(99,179,237,0.12)'  },
-  INFO:     { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)'  },
+  BLOCKER:  { color: '#dc2626', bg: 'rgba(239,68,68,0.08)'   },
+  CRITICAL: { color: '#ea580c', bg: 'rgba(234,88,12,0.08)'   },
+  MAJOR:    { color: '#d97706', bg: 'rgba(245,158,11,0.08)'  },
+  MINOR:    { color: '#00897b', bg: 'rgba(0,150,136,0.08)'   },
+  INFO:     { color: '#6b7280', bg: 'rgba(107,114,128,0.08)' },
 };
 
 const RISK_STYLE: Record<ZapRisk, { color: string; bg: string }> = {
-  High:          { color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
-  Medium:        { color: '#fbbf24', bg: 'rgba(251,191,36,0.12)'  },
-  Low:           { color: '#63b3ed', bg: 'rgba(99,179,237,0.12)'  },
-  Informational: { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)'  },
+  High:          { color: '#dc2626', bg: 'rgba(239,68,68,0.08)'   },
+  Medium:        { color: '#d97706', bg: 'rgba(245,158,11,0.08)'  },
+  Low:           { color: '#00897b', bg: 'rgba(0,150,136,0.08)'   },
+  Informational: { color: '#6b7280', bg: 'rgba(107,114,128,0.08)' },
 };
 
 const QG_STYLE: Record<QualityGate, { color: string; label: string }> = {
-  OK:   { color: '#34d399', label: 'Passed' },
-  WARN: { color: '#fbbf24', label: 'Warning' },
-  ERROR:{ color: '#f87171', label: 'Failed'  },
-  NONE: { color: '#94a3b8', label: 'Not Configured' },
+  OK:   { color: '#16a34a', label: 'Passed' },
+  WARN: { color: '#d97706', label: 'Warning' },
+  ERROR:{ color: '#dc2626', label: 'Failed'  },
+  NONE: { color: '#6b7280', label: 'Not Configured' },
 };
 
 function extractErrorMessage(err: unknown): string {
@@ -166,7 +166,7 @@ export const SecurityResultsPage: React.FC = () => {
               <Grid item xs={12} md={6}>
                 <Box className="dash-metric-card" sx={{ p: 2.5, borderRadius: 2 }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
-                    <Typography variant="subtitle1" fontWeight={600} color="#e2e8f0">
+                    <Typography variant="subtitle1" fontWeight={600} color="#1a202c">
                       SAST — SonarQube
                     </Typography>
                     <Box display="flex" gap={1} alignItems="center">
@@ -182,7 +182,7 @@ export const SecurityResultsPage: React.FC = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                           endIcon={<OpenInNewIcon fontSize="small" />}
-                          sx={{ color: '#63b3ed', textTransform: 'none', fontSize: 11 }}
+                          sx={{ color: '#00897b', textTransform: 'none', fontSize: 11 }}
                         >
                           Open
                         </Button>
@@ -213,10 +213,10 @@ export const SecurityResultsPage: React.FC = () => {
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <Typography variant="caption" color="#e2e8f0">{issue.message}</Typography>
+                                  <Typography variant="caption" color="#1a202c">{issue.message}</Typography>
                                 </TableCell>
                                 <TableCell>
-                                  <Typography variant="caption" color="rgba(148,163,184,0.6)" noWrap>
+                                  <Typography variant="caption" color="#6b7280" noWrap>
                                     {issue.component}{issue.line ? `:${issue.line}` : ''}
                                   </Typography>
                                 </TableCell>
@@ -226,13 +226,13 @@ export const SecurityResultsPage: React.FC = () => {
                         </TableBody>
                       </Table>
                       {sast.total_issues > 10 && (
-                        <Typography variant="caption" color="rgba(148,163,184,0.5)" mt={1} display="block">
+                        <Typography variant="caption" color="#9ca3af" mt={1} display="block">
                           Showing 10 of {sast.total_issues} issues. Open SonarQube for full report.
                         </Typography>
                       )}
                     </Box>
                   ) : (
-                    <Typography variant="body2" color="rgba(148,163,184,0.4)" fontStyle="italic">
+                    <Typography variant="body2" color="#9ca3af" fontStyle="italic">
                       {sast?.quality_gate === 'NONE'
                         ? 'SonarQube not configured. Set SONAR_HOST_URL and SONAR_TOKEN.'
                         : 'No issues found.'}
@@ -245,7 +245,7 @@ export const SecurityResultsPage: React.FC = () => {
               <Grid item xs={12} md={6}>
                 <Box className="dash-metric-card" sx={{ p: 2.5, borderRadius: 2 }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
-                    <Typography variant="subtitle1" fontWeight={600} color="#e2e8f0">
+                    <Typography variant="subtitle1" fontWeight={600} color="#1a202c">
                       DAST — OWASP ZAP
                     </Typography>
                     <Box display="flex" gap={1} alignItems="center">
@@ -262,7 +262,7 @@ export const SecurityResultsPage: React.FC = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                           endIcon={<OpenInNewIcon fontSize="small" />}
-                          sx={{ color: '#63b3ed', textTransform: 'none', fontSize: 11 }}
+                          sx={{ color: '#00897b', textTransform: 'none', fontSize: 11 }}
                         >
                           Open
                         </Button>
@@ -293,10 +293,10 @@ export const SecurityResultsPage: React.FC = () => {
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <Typography variant="caption" color="#e2e8f0">{alert.alert}</Typography>
+                                  <Typography variant="caption" color="#1a202c">{alert.alert}</Typography>
                                 </TableCell>
                                 <TableCell>
-                                  <Typography variant="caption" color="rgba(148,163,184,0.6)" noWrap sx={{ maxWidth: 120, display: 'block' }}>
+                                  <Typography variant="caption" color="#6b7280" noWrap sx={{ maxWidth: 120, display: 'block' }}>
                                     {alert.url}
                                   </Typography>
                                 </TableCell>
@@ -307,7 +307,7 @@ export const SecurityResultsPage: React.FC = () => {
                       </Table>
                     </Box>
                   ) : (
-                    <Typography variant="body2" color="rgba(148,163,184,0.4)" fontStyle="italic">
+                    <Typography variant="body2" color="#9ca3af" fontStyle="italic">
                       {!dast?.zap_url
                         ? 'OWASP ZAP not configured. Set ZAP_BASE_URL and ZAP_API_KEY.'
                         : 'No alerts found.'}

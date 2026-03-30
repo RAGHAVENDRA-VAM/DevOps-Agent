@@ -84,7 +84,7 @@ export const FailedPipelinesPage: React.FC = () => {
     return (
       <Box className="dash-root">
         <Box display="flex" justifyContent="center" alignItems="center" minHeight={300}>
-          <CircularProgress sx={{ color: '#63b3ed' }} />
+          <CircularProgress sx={{ color: '#009688' }} />
         </Box>
       </Box>
     );
@@ -116,7 +116,7 @@ export const FailedPipelinesPage: React.FC = () => {
           {error && (
             <Alert
               severity="error"
-              sx={{ mt: 2, mb: 2, bgcolor: 'rgba(239,68,68,0.1)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.3)' }}
+              sx={{ mt: 2, mb: 2, bgcolor: 'rgba(239,68,68,0.06)', color: '#dc2626', border: '1px solid rgba(239,68,68,0.2)' }}
             >
               {error}
             </Alert>
@@ -125,7 +125,7 @@ export const FailedPipelinesPage: React.FC = () => {
           {failedRuns.length === 0 && !error && (
             <Alert
               severity="success"
-              sx={{ mt: 2, bgcolor: 'rgba(16,185,129,0.1)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.3)' }}
+              sx={{ mt: 2, bgcolor: 'rgba(34,197,94,0.06)', color: '#15803d', border: '1px solid rgba(34,197,94,0.2)' }}
             >
               🎉 No failed pipelines in the last 7 days! All pipelines are passing.
             </Alert>
@@ -149,12 +149,12 @@ export const FailedPipelinesPage: React.FC = () => {
                     <React.Fragment key={run.id}>
                       <TableRow className="dash-table-row">
                         <TableCell>
-                          <Typography variant="body2" fontWeight={600} color="#e2e8f0">
+                          <Typography variant="body2" fontWeight={600} color="#1a202c">
                             {run.repo}
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" color="rgba(148,163,184,0.8)">
+                          <Typography variant="body2" color="#374151">
                             {run.workflow_name}
                           </Typography>
                         </TableCell>
@@ -162,18 +162,18 @@ export const FailedPipelinesPage: React.FC = () => {
                           <Chip
                             label={run.branch}
                             size="small"
-                            sx={{ bgcolor: 'rgba(99,179,237,0.1)', color: '#63b3ed', border: '1px solid rgba(99,179,237,0.2)' }}
+                            sx={{ bgcolor: 'rgba(0,150,136,0.1)', color: '#00897b', border: '1px solid rgba(0,150,136,0.2)' }}
                           />
                         </TableCell>
                         <TableCell>
                           <Chip
                             label={run.failed_job}
                             size="small"
-                            sx={{ bgcolor: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}
+                            sx={{ bgcolor: 'rgba(239,68,68,0.08)', color: '#dc2626', border: '1px solid rgba(239,68,68,0.2)' }}
                           />
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" color="rgba(148,163,184,0.6)">
+                          <Typography variant="body2" color="#6b7280">
                             {formatDate(run.failed_at)}
                           </Typography>
                         </TableCell>
@@ -183,7 +183,7 @@ export const FailedPipelinesPage: React.FC = () => {
                               size="small"
                               onClick={() => toggleExpand(run.id)}
                               title="View AI Analysis"
-                              sx={{ color: '#63b3ed' }}
+                              sx={{ color: '#00897b' }}
                               aria-label="Toggle AI analysis"
                               aria-expanded={expandedId === run.id}
                             >
@@ -201,7 +201,7 @@ export const FailedPipelinesPage: React.FC = () => {
                               target="_blank"
                               rel="noopener noreferrer"
                               title="View on GitHub"
-                              sx={{ color: 'rgba(148,163,184,0.6)' }}
+                              sx={{ color: '#6b7280' }}
                               aria-label="Open run on GitHub"
                             >
                               <OpenInNewIcon fontSize="small" />
@@ -212,18 +212,18 @@ export const FailedPipelinesPage: React.FC = () => {
 
                       {expandedId === run.id && (
                         <TableRow>
-                          <TableCell colSpan={6} sx={{ py: 0, bgcolor: 'rgba(13,25,48,0.5)' }}>
+                          <TableCell colSpan={6} sx={{ py: 0, bgcolor: 'rgba(0,150,136,0.02)' }}>
                             <Accordion expanded disableGutters sx={{ boxShadow: 'none', bgcolor: 'transparent' }}>
                               <AccordionSummary sx={{ display: 'none' }} />
                               <AccordionDetails sx={{ p: 2 }}>
                                 <Stack spacing={2}>
                                   <Box>
-                                    <Typography variant="subtitle2" color="#63b3ed" gutterBottom>
+                                    <Typography variant="subtitle2" color="#00897b" gutterBottom>
                                       🤖 AI Analysis
                                     </Typography>
                                     <Alert
                                       severity="info"
-                                      sx={{ mb: 2, bgcolor: 'rgba(59,130,246,0.1)', color: '#93c5fd', border: '1px solid rgba(59,130,246,0.2)' }}
+                                      sx={{ mb: 2, bgcolor: 'rgba(0,150,136,0.06)', color: '#00695c', border: '1px solid rgba(0,150,136,0.2)' }}
                                     >
                                       <Typography variant="body2" fontWeight={600} gutterBottom>
                                         Reason:
@@ -234,7 +234,7 @@ export const FailedPipelinesPage: React.FC = () => {
                                     </Alert>
                                     <Alert
                                       severity="success"
-                                      sx={{ bgcolor: 'rgba(16,185,129,0.1)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.2)' }}
+                                      sx={{ bgcolor: 'rgba(34,197,94,0.06)', color: '#15803d', border: '1px solid rgba(34,197,94,0.2)' }}
                                     >
                                       <Typography variant="body2" fontWeight={600} gutterBottom>
                                         Resolution:
@@ -246,7 +246,7 @@ export const FailedPipelinesPage: React.FC = () => {
                                   </Box>
 
                                   <Box>
-                                    <Typography variant="subtitle2" color="rgba(148,163,184,0.7)" gutterBottom>
+                                    <Typography variant="subtitle2" color="#6b7280" gutterBottom>
                                       Error Excerpt:
                                     </Typography>
                                     <Box component="pre" className="dash-error-pre">

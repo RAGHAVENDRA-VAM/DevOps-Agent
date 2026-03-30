@@ -61,14 +61,14 @@ export const InfrastructureSelectionPage: React.FC = () => {
 
   const fieldSx = {
     '& .MuiOutlinedInput-root': {
-      color: '#e2e8f0',
-      background: 'rgba(255,255,255,0.03)',
-      '& fieldset': { borderColor: 'rgba(99,179,237,0.2)' },
-      '&:hover fieldset': { borderColor: 'rgba(99,179,237,0.4)' },
-      '&.Mui-focused fieldset': { borderColor: '#63b3ed' },
+      color: '#000000',
+      background: '#f9fafb',
+      '& fieldset': { borderColor: '#d1d5db' },
+      '&:hover fieldset': { borderColor: '#009688' },
+      '&.Mui-focused fieldset': { borderColor: '#009688' },
     },
-    '& .MuiInputLabel-root': { color: 'rgba(148,163,184,0.7)' },
-    '& .MuiInputLabel-root.Mui-focused': { color: '#63b3ed' },
+    '& .MuiInputLabel-root': { color: '#000000' },
+    '& .MuiInputLabel-root.Mui-focused': { color: '#009688' },
   } as const;
 
   const handleProvision = async (): Promise<void> => {
@@ -101,12 +101,12 @@ export const InfrastructureSelectionPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0e1a 0%, #0d1b2a 100%)', p: 4 }}>
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #eef2ff 100%)', p: 4 }}>
       <Box maxWidth={900} mx="auto">
-        <Typography variant="h4" fontWeight={700} color="#e2e8f0" gutterBottom>
+        <Typography variant="h4" fontWeight={700} color="#000000" gutterBottom>
           Choose Deployment Target
         </Typography>
-        <Typography variant="body2" color="rgba(148,163,184,0.7)" mb={4}>
+        <Typography variant="body2" color="#000000" mb={4}>
           Select where you want to deploy your application on Azure
         </Typography>
 
@@ -120,9 +120,8 @@ export const InfrastructureSelectionPage: React.FC = () => {
                   onClick={() => setSelected(t.type)}
                   sx={{
                     p: 3, borderRadius: 3, cursor: 'pointer', height: '100%',
-                    border: `2px solid ${isSelected ? t.color : 'rgba(99,179,237,0.12)'}`,
-                    background: isSelected ? `rgba(${t.color === '#3b82f6' ? '59,130,246' : t.color === '#8b5cf6' ? '139,92,246' : '16,185,129'},0.08)` : 'rgba(13,25,48,0.8)',
-                    backdropFilter: 'blur(10px)',
+                    border: `2px solid ${isSelected ? t.color : '#e5e7eb'}`,
+                    background: isSelected ? `rgba(${t.color === '#3b82f6' ? '59,130,246' : t.color === '#8b5cf6' ? '139,92,246' : '16,185,129'},0.06)` : '#ffffff',
                     transition: 'all 0.2s ease',
                     position: 'relative',
                     '&:hover': {
@@ -136,8 +135,8 @@ export const InfrastructureSelectionPage: React.FC = () => {
                     <CheckCircleIcon sx={{ position: 'absolute', top: 12, right: 12, color: t.color, fontSize: 20 }} />
                   )}
                   <Box sx={{ color: t.color, mb: 1.5 }}>{t.icon}</Box>
-                  <Typography fontWeight={700} color="#e2e8f0" mb={1}>{t.label}</Typography>
-                  <Typography variant="body2" color="rgba(148,163,184,0.7)" mb={2} fontSize={13}>
+                  <Typography fontWeight={700} color="#000000" mb={1}>{t.label}</Typography>
+                  <Typography variant="body2" color="#000000" mb={2} fontSize={13}>
                     {t.description}
                   </Typography>
                   <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
@@ -159,10 +158,10 @@ export const InfrastructureSelectionPage: React.FC = () => {
         {/* Config Form */}
         {selected && (
           <Box sx={{
-            background: 'rgba(13,25,48,0.8)', border: '1px solid rgba(99,179,237,0.15)',
-            borderRadius: 3, p: 3, backdropFilter: 'blur(10px)', mb: 3,
+            background: '#ffffff', border: '1px solid #e5e7eb',
+            borderRadius: 3, p: 3, mb: 3,
           }}>
-            <Typography fontWeight={600} color="#e2e8f0" mb={2.5}>
+            <Typography fontWeight={600} color="#000000" mb={2.5}>
               Configuration
             </Typography>
             <Stack spacing={2}>
@@ -209,7 +208,7 @@ export const InfrastructureSelectionPage: React.FC = () => {
           <Button
             variant="outlined"
             onClick={() => navigate('/repos')}
-            sx={{ color: 'rgba(148,163,184,0.7)', borderColor: 'rgba(99,179,237,0.2)', '&:hover': { borderColor: '#63b3ed' } }}
+            sx={{ color: '#000000', borderColor: '#d1d5db', '&:hover': { borderColor: '#009688' } }}
           >
             Back
           </Button>
@@ -219,10 +218,10 @@ export const InfrastructureSelectionPage: React.FC = () => {
             onClick={handleProvision}
             startIcon={<RocketLaunchIcon />}
             sx={{
-              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+              background: 'linear-gradient(135deg, #009688, #00796b)',
               fontWeight: 700, px: 3,
-              '&:hover': { background: 'linear-gradient(135deg, #2563eb, #7c3aed)' },
-              '&:disabled': { background: 'rgba(99,179,237,0.1)', color: 'rgba(148,163,184,0.3)' },
+              '&:hover': { background: 'linear-gradient(135deg, #00796b, #00695c)' },
+              '&:disabled': { background: '#e5e7eb', color: '#9ca3af' },
             }}
           >
             {isProvisioning ? 'Provisioning...' : 'Provision & Deploy'}

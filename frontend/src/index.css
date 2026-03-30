@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --font-family-sans: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-print: 'Times New Roman', Times, serif;
+
+  --color-teal-50:  #e0f2f1;
+  --color-teal-100: #b2dfdb;
+  --color-teal-200: #80cbc4;
+  --color-teal-300: #4db6ac;
+  --color-teal-400: #26a69a;
+  --color-teal-500: #009688;
+  --color-teal-600: #00897b;
+  --color-teal-700: #00796b;
+  --color-teal-800: #00695c;
+  --color-teal-900: #004d40;
+
+  --background-image-main-gradient: linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #eef2ff 100%);
+  --background-image-header-gradient: linear-gradient(90deg, #00897b 0%, #00796b 100%);
+  --background-image-btn-primary: linear-gradient(135deg, #00897b, #00796b);
+  --background-image-btn-success: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+body {
+  background-image: var(--background-image-main-gradient);
+  background-attachment: fixed;
+  font-family: var(--font-family-sans);
+  color: #000000;
+  height: 100vh;
+  overflow: hidden;
+}
+
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Force black text everywhere */
+*, *::before, *::after {
+  color: inherit;
+}
+
+.MuiTypography-root,
+.MuiTableCell-root,
+.MuiInputBase-input,
+.MuiInputLabel-root,
+.MuiMenuItem-root,
+.MuiChip-label,
+.MuiButton-root,
+.MuiFormHelperText-root {
+  color: #000000 !important;
+}
+
+/* Dark panels — keep their own text colors */
+.prov-logs-scroll .MuiTypography-root,
+.prov-logs-scroll span {
+  color: inherit !important;
+}
+
+@media print {
+  body { font-family: var(--font-family-print); }
+}

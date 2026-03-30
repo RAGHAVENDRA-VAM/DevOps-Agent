@@ -81,9 +81,9 @@ export const LoginPage: React.FC = () => {
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="lineGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%"   stopColor="#63b3ed" stopOpacity="0" />
-              <stop offset="50%"  stopColor="#63b3ed" stopOpacity="1" />
-              <stop offset="100%" stopColor="#63b3ed" stopOpacity="0" />
+              <stop offset="0%"   stopColor="#009688" stopOpacity="0" />
+              <stop offset="50%"  stopColor="#009688" stopOpacity="1" />
+              <stop offset="100%" stopColor="#009688" stopOpacity="0" />
             </linearGradient>
           </defs>
           <line x1="0"   y1="25%" x2="100%" y2="25%" stroke="url(#lineGrad1)" strokeWidth="1" />
@@ -102,10 +102,10 @@ export const LoginPage: React.FC = () => {
             <Box className="login-logo-box">
               <RocketLaunchIcon sx={{ color: '#fff', fontSize: 32 }} />
             </Box>
-            <Typography variant="h5" fontWeight={700} color="#e2e8f0" letterSpacing={0.5}>
+            <Typography variant="h5" fontWeight={700} color="#1a202c" letterSpacing={0.5}>
               DevOps Agent
             </Typography>
-            <Typography variant="body2" color="rgba(148,163,184,0.8)" mt={0.5}>
+            <Typography variant="body2" color="#6b7280" mt={0.5}>
               Enterprise CI/CD Automation Platform
             </Typography>
           </Box>
@@ -125,7 +125,7 @@ export const LoginPage: React.FC = () => {
             onKeyDown={handleKeyDown}
             className="login-field"
             sx={{ mb: 2 }}
-            InputLabelProps={{ sx: { color: 'rgba(148,163,184,0.8)' } }}
+            InputLabelProps={{ sx: { color: '#6b7280' } }}
           />
 
           <TextField
@@ -138,14 +138,14 @@ export const LoginPage: React.FC = () => {
             onKeyDown={handleKeyDown}
             className="login-field"
             sx={{ mb: 3 }}
-            InputLabelProps={{ sx: { color: 'rgba(148,163,184,0.8)' } }}
+            InputLabelProps={{ sx: { color: '#6b7280' } }}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
                     onClick={() => setShowPassword((prev) => !prev)}
                     edge="end"
-                    sx={{ color: 'rgba(148,163,184,0.6)' }}
+                    sx={{ color: '#9ca3af' }}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
@@ -165,8 +165,8 @@ export const LoginPage: React.FC = () => {
             Sign In
           </Button>
 
-          <Divider sx={{ my: 1, borderColor: 'rgba(148,163,184,0.2)' }}>
-            <Typography variant="caption" color="rgba(148,163,184,0.5)">
+          <Divider sx={{ my: 1, borderColor: '#e5e7eb' }}>
+            <Typography variant="caption" color="#9ca3af">
               OR
             </Typography>
           </Divider>
@@ -184,7 +184,7 @@ export const LoginPage: React.FC = () => {
 
           <Typography
             variant="caption"
-            color="rgba(100,116,139,0.7)"
+            color="#9ca3af"
             display="block"
             textAlign="center"
             mt={2}

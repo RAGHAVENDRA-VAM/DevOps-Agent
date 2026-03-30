@@ -76,7 +76,7 @@ export const RepoSelectionPage: React.FC = () => {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon sx={{ color: 'rgba(148,163,184,0.5)' }} />
+                <SearchIcon sx={{ color: '#9ca3af' }} />
               </InputAdornment>
             ),
           }}
@@ -89,7 +89,7 @@ export const RepoSelectionPage: React.FC = () => {
 
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" height={300}>
-          <CircularProgress sx={{ color: '#63b3ed' }} />
+          <CircularProgress sx={{ color: '#009688' }} />
         </Box>
       ) : (
         <Box className="repo-grid">
@@ -113,13 +113,13 @@ export const RepoSelectionPage: React.FC = () => {
                     <FolderIcon sx={{ color: '#63b3ed', fontSize: 20 }} />
                   </Avatar>
                   <Box flex={1} minWidth={0}>
-                    <Typography fontWeight={600} color="#e2e8f0" noWrap fontSize={14}>
+                    <Typography fontWeight={600} color="#1a202c" noWrap fontSize={14}>
                       {repo.full_name}
                     </Typography>
                     <Box display="flex" alignItems="center" gap={1} mt={0.8} flexWrap="wrap">
                       <Box display="flex" alignItems="center" gap={0.5}>
-                        <CallSplitIcon sx={{ fontSize: 12, color: 'rgba(148,163,184,0.5)' }} />
-                        <Typography variant="caption" color="rgba(148,163,184,0.6)">
+                        <CallSplitIcon sx={{ fontSize: 12, color: '#9ca3af' }} />
+                        <Typography variant="caption" color="#6b7280">
                           {repo.default_branch}
                         </Typography>
                       </Box>
@@ -129,7 +129,7 @@ export const RepoSelectionPage: React.FC = () => {
                             className="repo-lang-dot"
                             sx={{ bgcolor: color }}
                           />
-                          <Typography variant="caption" color="rgba(148,163,184,0.6)">
+                          <Typography variant="caption" color="#6b7280">
                             {repo.language}
                           </Typography>
                         </Box>
@@ -148,7 +148,7 @@ export const RepoSelectionPage: React.FC = () => {
 
           {filtered.length === 0 && (
             <Box className="repo-empty">
-              <Typography color="rgba(148,163,184,0.5)">No repositories found</Typography>
+              <Typography color="#9ca3af">No repositories found</Typography>
             </Box>
           )}
         </Box>

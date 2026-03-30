@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Chip,
-  Button,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -115,133 +112,114 @@ export const BuildMonitor: React.FC<BuildMonitorProps> = ({ repoOwner, repoName 
 
   if (loading) {
     return (
-      <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="center" p={2}>
-            <CircularProgress />
-          </Box>
-        </CardContent>
-      </Card>
+      <div className="rounded-card shadow-card bg-white/80 p-6 flex justify-center items-center min-h-[120px]">
+        <CircularProgress />
+      </div>
     );
   }
 
   return (
-    <>
-      <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">
-              Build Status - {repoOwner}/{repoName}
-            </Typography>
-            <Stack direction="row" spacing={1}>
-              <Tooltip title="Refresh">
-                <IconButton onClick={fetchBuildStatus} size="small">
-                  <RefreshIcon />
-                </IconButton>
-              </Tooltip>
-              {isMonitoring ? (
-                <Button
-                  startIcon={<StopIcon />}
-                  onClick={stopMonitoring}
-                  variant="outlined"
-                  color="error"
-                  size="small"
-                >
-                  Stop
-                </Button>
-              ) : (
-                <Button
-                  startIcon={<PlayIcon />}
-                  onClick={startMonitoring}
-                  variant="contained"
-                  size="small"
-                >
-                  Monitor
-                </Button>
-              )}
-            </Stack>
-          </Box>
+    <div>
+      <div className="rounded-card shadow-card bg-white/80 p-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+          <h2 className="text-lg font-semibold text-primary-dark">Build Status - {repoOwner}/{repoName}</h2>
+          <div className="flex gap-2">
+            <Tooltip title="Refresh">
+              <button
+                onClick={fetchBuildStatus}
+                aria-label="Refresh"
+                className="rounded-full p-2 bg-gradient-to-tr from-primary to-primary-light text-white hover:from-teal hover:to-primary-light transition-colors shadow focus:outline-none focus:ring-2 focus:ring-teal"
+              >
+                <RefreshIcon fontSize="small" />
+              </button>
+            </Tooltip>
+            {isMonitoring ? (
+              <button
+                onClick={stopMonitoring}
+                className="rounded-button border border-red-500 text-red-600 px-3 py-1 bg-white hover:bg-red-50 transition-colors shadow-button text-sm flex items-center gap-1"
+                aria-label="Stop Monitoring"
+              >
+                <StopIcon fontSize="small" />
+                <span>Stop</span>
+              </button>
+            ) : (
+              <button
+                onClick={startMonitoring}
+                className="rounded-button bg-gradient-to-tr from-primary to-primary-light text-white px-3 py-1 hover:from-teal hover:to-primary-light transition-colors shadow-button text-sm flex items-center gap-1"
+                aria-label="Start Monitoring"
+              >
+                <PlayIcon fontSize="small" />
+                <span>Monitor</span>
+              </button>
+            )}
+          </div>
+        </div>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+        {error && (
+          <div className="mb-2">
+            <div className="rounded bg-red-100 text-red-800 px-4 py-2 text-sm" role="alert">
               {error}
-            </Alert>
-          )}
+            </div>
+          </div>
+        )}
 
-          {buildStatus && (
-            <Box>
-              {buildStatus.status === 'no_runs' ? (
-                <Alert severity="info">No builds found for this repository</Alert>
-              ) : (
-                <Stack spacing={2}>
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Latest Build
-                    </Typography>
-                    <Box display="flex" alignItems="center" gap={2}>
+        {buildStatus && (
+          buildStatus.status === 'no_runs' ? (
+            <div className="rounded bg-blue-100 text-blue-800 px-4 py-2 text-sm" role="status">
+              No builds found for this repository
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6">
+              <div>
+                <div className="text-xs font-semibold text-primary-dark mb-1">Latest Build</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Chip
+                    label={getStatusText(buildStatus.latest_run.status, buildStatus.latest_run.conclusion)}
+                    color={getStatusColor(buildStatus.latest_run.status, buildStatus.latest_run.conclusion)}
+                    size="small"
+                  />
+                  <span className="text-sm text-gray-800">{buildStatus.latest_run.workflow_name} on {buildStatus.latest_run.branch}</span>
+                  <span className="text-xs text-gray-500">{buildStatus.latest_run.commit_sha}</span>
+                  <button
+                    onClick={() => viewLogs(buildStatus.latest_run)}
+                    className="rounded-button border border-primary text-primary px-2 py-1 bg-white hover:bg-primary-light hover:text-white transition-colors shadow-button text-xs flex items-center gap-1"
+                    aria-label="View Logs"
+                  >
+                    <ViewIcon fontSize="small" />
+                    <span>Logs</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold text-primary-dark mb-1">Recent Builds</div>
+                <div className="flex flex-col gap-1">
+                  {buildStatus.runs.slice(0, 5).map((run) => (
+                    <div key={run.id} className="flex flex-wrap items-center gap-2">
                       <Chip
-                        label={getStatusText(buildStatus.latest_run.status, buildStatus.latest_run.conclusion)}
-                        color={getStatusColor(buildStatus.latest_run.status, buildStatus.latest_run.conclusion)}
+                        label={getStatusText(run.status, run.conclusion)}
+                        color={getStatusColor(run.status, run.conclusion)}
                         size="small"
                       />
-                      <Typography variant="body2">
-                        {buildStatus.latest_run.workflow_name} on {buildStatus.latest_run.branch}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {buildStatus.latest_run.commit_sha}
-                      </Typography>
-                      <Button
-                        startIcon={<ViewIcon />}
-                        onClick={() => viewLogs(buildStatus.latest_run)}
+                      <span className="text-sm text-gray-800 min-w-[120px]">{run.workflow_name}</span>
+                      <span className="text-xs text-gray-500 min-w-[80px]">{run.branch}</span>
+                      <span className="text-xs text-gray-500 min-w-[60px]">{run.commit_sha}</span>
+                      <span className="text-xs text-gray-400">{new Date(run.updated_at).toLocaleString()}</span>
+                      <IconButton
+                        onClick={() => viewLogs(run)}
                         size="small"
-                        variant="outlined"
+                        title="View logs"
                       >
-                        Logs
-                      </Button>
-                    </Box>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Recent Builds
-                    </Typography>
-                    <Stack spacing={1}>
-                      {buildStatus.runs.slice(0, 5).map((run) => (
-                        <Box key={run.id} display="flex" alignItems="center" gap={2}>
-                          <Chip
-                            label={getStatusText(run.status, run.conclusion)}
-                            color={getStatusColor(run.status, run.conclusion)}
-                            size="small"
-                          />
-                          <Typography variant="body2" sx={{ minWidth: 120 }}>
-                            {run.workflow_name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ minWidth: 80 }}>
-                            {run.branch}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ minWidth: 60 }}>
-                            {run.commit_sha}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                            {new Date(run.updated_at).toLocaleString()}
-                          </Typography>
-                          <IconButton
-                            onClick={() => viewLogs(run)}
-                            size="small"
-                            title="View logs"
-                          >
-                            <ViewIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      ))}
-                    </Stack>
-                  </Box>
-                </Stack>
-              )}
-            </Box>
-          )}
-        </CardContent>
-      </Card>
+                        <ViewIcon fontSize="small" />
+                      </IconButton>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )
+        )}
+      </div>
 
       <Dialog
         open={!!selectedRun}
@@ -277,20 +255,24 @@ export const BuildMonitor: React.FC<BuildMonitorProps> = ({ repoOwner, repoName 
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSelectedRun(null)}>Close</Button>
+          <button
+            onClick={() => setSelectedRun(null)}
+            className="rounded-button border border-gray-400 text-gray-700 px-3 py-1 bg-white hover:bg-gray-100 transition-colors shadow-button text-sm"
+          >
+            Close
+          </button>
           {selectedRun && (
-            <Button
-              component="a"
+            <a
               href={selectedRun.html_url}
               target="_blank"
               rel="noopener noreferrer"
-              variant="outlined"
+              className="rounded-button border border-primary text-primary px-3 py-1 bg-white hover:bg-primary-light hover:text-white transition-colors shadow-button text-sm ml-2"
             >
               View on GitHub
-            </Button>
+            </a>
           )}
         </DialogActions>
       </Dialog>
-    </>
+    </div>
   );
 };

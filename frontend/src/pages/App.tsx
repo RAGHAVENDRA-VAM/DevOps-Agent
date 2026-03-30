@@ -9,6 +9,7 @@ import { PipelinePreviewPage } from './PipelinePreviewPage';
 import { InfrastructureSelectionPage } from './InfrastructureSelectionPage';
 import { DeployConfigPage } from './DeployConfigPage';
 import { ProvisioningPage } from './ProvisioningPage';
+import { DashboardPage } from './DashboardPage';
 import { DeploymentDashboardPage } from './DeploymentDashboardPage';
 import { DoraDashboardPage } from './DoraDashboardPage';
 import { SecurityResultsPage } from './SecurityResultsPage';
@@ -17,8 +18,14 @@ import { ApprovalsPage } from './ApprovalsPage';
 import { BuildDashboardPage } from './BuildDashboardPage';
 import { BuildStatusPage } from './BuildStatusPage';
 
+const HEADER_HEIGHT = 64; // px — matches AppBar height
+
+// Pages that should scroll (approvals has dynamic content)
+const SCROLLABLE_ROUTES = ['/approvals'];
+
 const AppRoutes: React.FC = () => (
   <Routes>
+    <Route path="/dashboard"              element={<DashboardPage />}              />
     <Route path="/approvals"               element={<ApprovalsPage />}              />
     <Route path="/repos"                    element={<RepoSelectionPage />}          />
     <Route path="/deploy-config"            element={<DeployConfigPage />}           />
@@ -32,13 +39,14 @@ const AppRoutes: React.FC = () => (
     <Route path="/security"                 element={<SecurityResultsPage />}        />
     <Route path="/builds"                   element={<BuildDashboardPage />}         />
     <Route path="/build-status"             element={<BuildStatusPage />}            />
-    <Route path="/"                         element={<Navigate to="/login" replace />} />
+    <Route path="/"                         element={<Navigate to="/dashboard" replace />} />
   </Routes>
 );
 
 export const App: React.FC = () => {
   const location = useLocation();
   const isLogin  = location.pathname === '/login';
+  const isScrollable = SCROLLABLE_ROUTES.includes(location.pathname);
 
   if (isLogin) {
     return (
@@ -50,18 +58,20 @@ export const App: React.FC = () => {
   }
 
   return (
-    <>
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <AppHeader />
       <Box
-        component="main"
         sx={{
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, #0a0e1a 0%, #0d1b2a 100%)',
+          flex: 1,
+          mt: `${HEADER_HEIGHT}px`,
+          overflow: isScrollable ? 'auto' : 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <AppRoutes />
       </Box>
-    </>
+    </Box>
   );
 };
 

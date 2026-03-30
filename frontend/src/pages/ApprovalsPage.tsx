@@ -24,8 +24,31 @@ const STAGES = [
   { num: 4, label: 'GitHub Actions',    desc: 'Monitoring workflow run until completion' },
 ];
 
+function parseActionsStatus(logs: string[]): { status: string; elapsed: string | null } {
+  let status = 'WAITING';
+  let elapsed: string | null = null;
+  for (const line of [...logs].reverse()) {
+    const m = line.match(/Workflow status:\s*(\S+)/);
+    if (m) { status = m[1]; }
+    const e = line.match(/elapsed[:\s]+(\S+)/i);
+    if (e) { elapsed = e[1]; }
+    if (m) break;
+  }
+  return { status, elapsed };
+}
+
+const ACTIONS_STATUS_COLOR: Record<string, string> = {
+  IN_PROGRESS: '#d97706',
+  QUEUED:      '#6b7280',
+  COMPLETED:   '#16a34a',
+  SUCCESS:     '#16a34a',
+  FAILURE:     '#dc2626',
+  CANCELLED:   '#6b7280',
+  WAITING:     '#9ca3af',
+};
+
 const STATUS_COLOR: Record<string, string> = {
-  pending: '#fbbf24', running: '#38bdf8', done: '#34d399', failed: '#f87171', rejected: '#94a3b8',
+  pending: '#d97706', running: '#009688', done: '#16a34a', failed: '#dc2626', rejected: '#6b7280',
 };
 
 function stageState(stageNum: number, currentStage: number, status: string): 'done' | 'active' | 'failed' | 'waiting' {
@@ -37,11 +60,26 @@ function stageState(stageNum: number, currentStage: number, status: string): 'do
 
 function logLineColor(line: string): string {
   const l = line.toLowerCase();
-  if (l.includes('fail') || l.includes('error')) return '#f87171';
-  if (l.includes('complete') || l.includes('success') || l.includes('ok')) return '#34d399';
-  if (l.includes('warning') || l.includes('warn')) return '#fbbf24';
-  if (l.startsWith('provisioned') || l.startsWith('committed') || l.startsWith('secrets')) return '#a78bfa';
-  return '#94a3b8';
+  if (l.includes('fail') || l.includes('error')) return '#fca5a5';
+  if (l.includes('complete') || l.includes('success') || l.includes('ok')) return '#86efac';
+  if (l.includes('in_progress') || l.includes('queued')) return '#fde68a';
+  if (l.includes('warning') || l.includes('warn')) return '#fde68a';
+  if (l.startsWith('provisioned') || l.startsWith('committed') || l.startsWith('secrets')) return '#c4b5fd';
+  if (l.includes('actions run') || l.includes('http')) return '#7dd3fc';
+  return '#cbd5e1';
+}
+
+function formatLogLine(line: string): string {
+  // Make polling lines more readable
+  return line
+    .replace(/\[\d+\]\s*/, '')           // remove [01] prefix
+    .replace('Workflow status: IN_PROGRESS', '⏳ Workflow running...')
+    .replace('Workflow status: QUEUED',      '🕐 Workflow queued...')
+    .replace('Workflow status: COMPLETED',   '✅ Workflow completed')
+    .replace('Workflow status: SUCCESS',     '✅ Workflow succeeded')
+    .replace('Workflow status: FAILURE',     '❌ Workflow failed')
+    .replace('Workflow status: CANCELLED',   '⛔ Workflow cancelled')
+    .replace('Waiting for GitHub Actions workflow to start...', '⏳ Waiting for workflow to start...');
 }
 
 // ── Stage log panel ──────────────────────────────────────────────────────────
@@ -53,24 +91,24 @@ const StageLogPanel: React.FC<{ logs: string[]; active: boolean }> = ({ logs, ac
 
   return (
     <Box ref={ref} sx={{
-      background: '#020817', border: '1px solid rgba(99,179,237,0.1)',
+      background: '#1e293b', border: '1px solid #334155',
       borderRadius: 1, p: 1.5, maxHeight: 200, overflowY: 'auto',
       fontFamily: 'monospace', fontSize: 11, mt: 1,
     }}>
       {logs.length === 0
-        ? <Typography variant="caption" color="rgba(148,163,184,0.3)">
+        ? <Typography variant="caption" color="#64748b">
             {active ? 'Waiting for output...' : 'No output yet'}
           </Typography>
         : logs.map((line, i) => (
           <Box key={i} sx={{ color: logLineColor(line), lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-            {line}
+            {formatLogLine(line)}
           </Box>
         ))
       }
       {active && (
         <Box display="flex" alignItems="center" gap={0.5} mt={0.5}>
-          <CircularProgress size={8} sx={{ color: '#38bdf8' }} />
-          <Typography variant="caption" color="#38bdf8" fontSize={10}>running...</Typography>
+          <CircularProgress size={8} sx={{ color: '#009688' }} />
+          <Typography variant="caption" color="#009688" fontSize={10}>running...</Typography>
         </Box>
       )}
     </Box>
@@ -93,7 +131,7 @@ const TechBadges: React.FC<{ tech: DetectedTech }> = ({ tech }) => {
       {items.filter(([, v]) => v).map(([label, value]) => (
         <Chip key={label} size="small"
           label={`${label}: ${value}`}
-          sx={{ background: 'rgba(167,139,250,0.1)', color: '#a78bfa', fontSize: 10, border: '1px solid rgba(167,139,250,0.2)' }} />
+          sx={{ background: 'rgba(139,92,246,0.08)', color: '#7c3aed', fontSize: 10, border: '1px solid rgba(139,92,246,0.2)' }} />
       ))}
     </Box>
   );
@@ -212,19 +250,19 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
 
   return (
     <Paper sx={{
-      background: 'rgba(13,25,48,0.9)',
-      border: `1px solid ${isRunning ? 'rgba(56,189,248,0.3)' : 'rgba(99,179,237,0.15)'}`,
+      background: '#ffffff',
+      border: `1px solid ${isRunning ? 'rgba(0,150,136,0.3)' : '#e5e7eb'}`,
       borderRadius: 2, p: 3, mb: 2,
-      boxShadow: isRunning ? '0 0 20px rgba(56,189,248,0.08)' : 'none',
+      boxShadow: isRunning ? '0 0 20px rgba(0,150,136,0.08)' : '0 2px 8px rgba(0,0,0,0.06)',
     }}>
       {/* ── Header ── */}
       <Box display="flex" alignItems="flex-start" justifyContent="space-between" flexWrap="wrap" gap={1} mb={1}>
         <Box>
-          <Typography variant="subtitle1" fontWeight={700} color="#e2e8f0">{approval.repo}</Typography>
-          <Typography variant="caption" color="rgba(148,163,184,0.6)">
-            Branch: <b style={{ color: '#63b3ed' }}>{approval.branch}</b>
+          <Typography variant="subtitle1" fontWeight={700} color="#1a202c">{approval.repo}</Typography>
+          <Typography variant="caption" color="#6b7280">
+            Branch: <b style={{ color: '#00897b' }}>{approval.branch}</b>
             &nbsp;·&nbsp;
-            <code style={{ color: '#63b3ed' }}>{approval.commit_sha}</code>
+            <code style={{ color: '#00897b' }}>{approval.commit_sha}</code>
             &nbsp;·&nbsp;{approval.committed_by}
             {approval.committed_at && <>&nbsp;·&nbsp;{new Date(approval.committed_at).toLocaleString()}</>}
           </Typography>
@@ -233,7 +271,7 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
           sx={{ color: statusColor, background: `${statusColor}18`, border: `1px solid ${statusColor}40`, fontWeight: 700 }} />
       </Box>
 
-      <Typography variant="body2" color="rgba(148,163,184,0.6)" mb={1.5} sx={{ fontStyle: 'italic' }}>
+      <Typography variant="body2" color="#6b7280" mb={1.5} sx={{ fontStyle: 'italic' }}>
         {approval.commit_message}
       </Typography>
 
@@ -244,11 +282,11 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
           ['Region', cfg.LOCATION], ['RG', cfg.RESOURCE_GROUP],
         ] as [string, unknown][]).filter(([, v]) => v).map(([label, value]) => (
           <Chip key={label} size="small" label={`${label}: ${value}`}
-            sx={{ background: 'rgba(99,179,237,0.07)', color: '#64748b', fontSize: 10 }} />
+            sx={{ background: 'rgba(0,150,136,0.06)', color: '#374151', fontSize: 10 }} />
         ))}
       </Box>
 
-      <Divider sx={{ borderColor: 'rgba(99,179,237,0.08)', mb: 2 }} />
+      <Divider sx={{ borderColor: '#e5e7eb', mb: 2 }} />
 
       {/* ── Approve / Reject ── */}
       {status === 'pending' && (
@@ -261,7 +299,7 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
           </Button>
           <Button variant="outlined" size="small" startIcon={<CancelIcon />}
             disabled={isLoading} onClick={() => onReject(approval.id)}
-            sx={{ borderColor: '#f87171', color: '#f87171', textTransform: 'none' }}>
+            sx={{ borderColor: '#fca5a5', color: '#dc2626', textTransform: 'none' }}>
             Reject
           </Button>
         </Box>
@@ -273,12 +311,12 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
           <Button variant="contained" size="small"
             startIcon={isLoading ? <CircularProgress size={13} color="inherit" /> : <RefreshIcon />}
             disabled={isLoading} onClick={() => onRetry(approval.id)}
-            sx={{ background: 'linear-gradient(135deg,#3b82f6,#06b6d4)', fontWeight: 700, textTransform: 'none' }}>
+            sx={{ background: 'linear-gradient(135deg,#009688,#00796b)', fontWeight: 700, textTransform: 'none' }}>
             Retry
           </Button>
           <Button variant="outlined" size="small" startIcon={<CancelIcon />}
             disabled={isLoading} onClick={() => onReject(approval.id)}
-            sx={{ borderColor: '#f87171', color: '#f87171', textTransform: 'none' }}>
+            sx={{ borderColor: '#fca5a5', color: '#dc2626', textTransform: 'none' }}>
             Reject
           </Button>
         </Box>
@@ -293,14 +331,14 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
             const isExpanded = expandedStage === s.num;
 
             const dotColor =
-              state === 'done'    ? '#34d399' :
-              state === 'active'  ? '#38bdf8' :
-              state === 'failed'  ? '#f87171' : 'rgba(148,163,184,0.2)';
+              state === 'done'    ? '#16a34a' :
+              state === 'active'  ? '#009688' :
+              state === 'failed'  ? '#dc2626' : 'rgba(209,213,219,0.6)';
 
             const labelColor =
-              state === 'done'    ? '#34d399' :
-              state === 'active'  ? '#e2e8f0' :
-              state === 'failed'  ? '#f87171' : 'rgba(148,163,184,0.3)';
+              state === 'done'    ? '#16a34a' :
+              state === 'active'  ? '#1a202c' :
+              state === 'failed'  ? '#dc2626' : '#9ca3af';
 
             return (
               <Box key={s.num} mb={0.5}>
@@ -308,7 +346,7 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
                   display="flex" alignItems="center" gap={1.5}
                   sx={{ cursor: logs.length > 0 ? 'pointer' : 'default', py: 0.75,
                         px: 1, borderRadius: 1,
-                        '&:hover': logs.length > 0 ? { background: 'rgba(99,179,237,0.04)' } : {} }}
+                        '&:hover': logs.length > 0 ? { background: 'rgba(0,150,136,0.04)' } : {} }}
                   onClick={() => logs.length > 0 && setExpandedStage(isExpanded ? null : s.num)}
                 >
                   {/* dot / spinner */}
@@ -329,16 +367,42 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
                       Stage {s.num}: {s.label}
                     </Typography>
                     {state === 'active' && (
-                      <Typography variant="caption" color="rgba(148,163,184,0.5)" ml={1}>
+                      <Typography variant="caption" color="#6b7280" ml={1}>
                         {s.desc}
                       </Typography>
                     )}
-                    {/* For Actions stage show the latest operation as a compact sublabel */}
-                    {s.num === 4 && logs.length > 0 && (
-                      <Typography variant="caption" color="rgba(148,163,184,0.45)" ml={1} noWrap>
-                        {logs[logs.length - 1]}
-                      </Typography>
-                    )}
+                    {/* For Actions stage show parsed status badge + link */}
+                    {s.num === 4 && logs.length > 0 && (() => {
+                      const { status: wfStatus, elapsed } = parseActionsStatus(logs);
+                      const wfColor = ACTIONS_STATUS_COLOR[wfStatus] ?? '#9ca3af';
+                      return (
+                        <Box display="flex" alignItems="center" gap={1} mt={0.5} flexWrap="wrap">
+                          <Chip
+                            label={wfStatus.replace('_', ' ')}
+                            size="small"
+                            sx={{ fontSize: 10, fontWeight: 700, height: 20,
+                              color: wfColor, background: `${wfColor}18`,
+                              border: `1px solid ${wfColor}40` }}
+                          />
+                          {elapsed && (
+                            <Typography variant="caption" color="#6b7280">⏱ {elapsed}</Typography>
+                          )}
+                          {actionsUrl && (
+                            <Button
+                              size="small"
+                              href={actionsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              endIcon={<OpenInNewIcon sx={{ fontSize: 11 }} />}
+                              sx={{ fontSize: 10, p: '1px 6px', minWidth: 0,
+                                color: '#00897b', textTransform: 'none', lineHeight: 1.5 }}
+                            >
+                              View Run
+                            </Button>
+                          )}
+                        </Box>
+                      );
+                    })()}
                     {/* Tech badges inline after stage 1 completes */}
                     {s.num === 1 && state === 'done' && tech.language && (
                       <TechBadges tech={tech} />
@@ -347,7 +411,7 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
 
                   {/* expand toggle */}
                   {logs.length > 0 && (
-                    <Box sx={{ color: 'rgba(148,163,184,0.4)', fontSize: 12 }}>
+                    <Box sx={{ color: '#9ca3af', fontSize: 12 }}>
                       {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
                     </Box>
                   )}
@@ -368,15 +432,15 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
       {/* ── Deployed URL ── */}
       {deployedUrl && (
         <Box display="flex" alignItems="center" gap={1.5} p={2} mt={1}
-          sx={{ background: 'rgba(52,211,153,0.07)', borderRadius: 1.5, border: '1px solid rgba(52,211,153,0.25)' }}>
+          sx={{ background: 'rgba(34,197,94,0.06)', borderRadius: 1.5, border: '1px solid rgba(34,197,94,0.2)' }}>
           <Box sx={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', flexShrink: 0,
             boxShadow: '0 0 10px #34d399',
             animation: status === 'done' ? 'pulse 2s infinite' : 'none' }} />
           <Box flex={1} minWidth={0}>
-            <Typography variant="caption" color="rgba(52,211,153,0.7)" display="block" fontWeight={600}>
+            <Typography variant="caption" color="rgba(22,163,74,0.8)" display="block" fontWeight={600}>
               LIVE APPLICATION
             </Typography>
-            <Typography variant="body2" color="#34d399" fontWeight={700}
+            <Typography variant="body2" color="#16a34a" fontWeight={700}
               sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {deployedUrl}
             </Typography>
@@ -384,9 +448,9 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
           <Button variant="contained" size="small" endIcon={<OpenInNewIcon fontSize="small" />}
             href={deployedUrl.startsWith('http') ? deployedUrl : `https://${deployedUrl}`}
             target="_blank" rel="noopener noreferrer"
-            sx={{ background: 'linear-gradient(135deg,#34d399,#059669)', color: '#fff',
+            sx={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)', color: '#fff',
               fontWeight: 700, textTransform: 'none', flexShrink: 0,
-              '&:hover': { background: 'linear-gradient(135deg,#6ee7b7,#34d399)' } }}>
+              '&:hover': { background: 'linear-gradient(135deg,#4ade80,#22c55e)' } }}>
             Open App
           </Button>
         </Box>
@@ -397,7 +461,7 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
         <Box mt={1}>
           <Button size="small" endIcon={<OpenInNewIcon fontSize="small" />}
             href={actionsUrl} target="_blank" rel="noopener noreferrer"
-            sx={{ color: '#63b3ed', textTransform: 'none', fontSize: 11, p: 0 }}>
+            sx={{ color: '#00897b', textTransform: 'none', fontSize: 11, p: 0 }}>
             View GitHub Actions run
           </Button>
         </Box>
@@ -408,24 +472,24 @@ const ApprovalCard: React.FC<CardProps> = ({ approval, onApprove, onReject, onRe
 
 // ── Debug panel ──────────────────────────────────────────────────────────────
 const DebugPanel: React.FC<{ debug: DebugState }> = ({ debug }) => (
-  <Paper sx={{ background: 'rgba(13,25,48,0.9)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 2, p: 2.5, mb: 3 }}>
-    <Typography variant="subtitle2" color="#fbbf24" fontWeight={700} mb={1.5}>Poller Diagnostics</Typography>
+  <Paper sx={{ background: '#fffbeb', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 2, p: 2.5, mb: 3 }}>
+    <Typography variant="subtitle2" color="#d97706" fontWeight={700} mb={1.5}>Poller Diagnostics</Typography>
     <Box display="flex" flexWrap="wrap" gap={1} mb={1.5}>
       <Chip size="small" label={`Token: ${debug.token_preview}`}
         sx={{ background: debug.token_set ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)',
-          color: debug.token_set ? '#34d399' : '#f87171' }} />
+          color: debug.token_set ? '#16a34a' : '#dc2626' }} />
       <Chip size="small" label={`GitHub: ${debug.github_reachable ? 'Reachable' : 'Unreachable'}`}
-        sx={{ background: debug.github_reachable ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)',
-          color: debug.github_reachable ? '#34d399' : '#f87171' }} />
+        sx={{ background: debug.github_reachable ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.08)',
+          color: debug.github_reachable ? '#16a34a' : '#dc2626' }} />
       {debug.github_user && (
         <Chip size="small" label={`User: ${debug.github_user}`}
-          sx={{ background: 'rgba(99,179,237,0.1)', color: '#63b3ed' }} />
+          sx={{ background: 'rgba(0,150,136,0.1)', color: '#00897b' }} />
       )}
       <Chip size="small" label={`${debug.repos_visible.length} repos visible`}
-        sx={{ background: 'rgba(99,179,237,0.1)', color: '#63b3ed' }} />
+        sx={{ background: 'rgba(0,150,136,0.1)', color: '#00897b' }} />
       <Chip size="small" label={`${debug.repos_with_config_py.length} with config.py`}
-        sx={{ background: debug.repos_with_config_py.length > 0 ? 'rgba(52,211,153,0.1)' : 'rgba(148,163,184,0.1)',
-          color: debug.repos_with_config_py.length > 0 ? '#34d399' : '#94a3b8' }} />
+        sx={{ background: debug.repos_with_config_py.length > 0 ? 'rgba(34,197,94,0.1)' : 'rgba(107,114,128,0.1)',
+          color: debug.repos_with_config_py.length > 0 ? '#16a34a' : '#6b7280' }} />
     </Box>
     {!debug.token_set && (
       <Alert severity="error" sx={{ mt: 1, fontSize: 12 }}>GITHUB_PERSONAL_ACCESS_TOKEN is not set in backend/.env</Alert>
@@ -522,31 +586,31 @@ export const ApprovalsPage: React.FC = () => {
       {/* ── Page header ── */}
       <Box display="flex" alignItems="flex-start" justifyContent="space-between" flexWrap="wrap" gap={2} mb={3}>
         <Box>
-          <Typography variant="subtitle1" fontWeight={700} color="#e2e8f0">
+          <Typography variant="subtitle1" fontWeight={700} color="#1a202c">
             Deployment Approvals
           </Typography>
-          <Typography variant="body2" color="rgba(148,163,184,0.55)" mt={0.5}>
+          <Typography variant="body2" color="#6b7280" mt={0.5}>
             Repos that committed <code>config.py</code> — approve to run the full automated pipeline
           </Typography>
         </Box>
         <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
           {pending > 0 && (
             <Chip label={`${pending} pending`}
-              sx={{ background: 'rgba(251,191,36,0.12)', color: '#fbbf24', fontWeight: 700 }} />
+              sx={{ background: 'rgba(245,158,11,0.1)', color: '#d97706', fontWeight: 700 }} />
           )}
           {running > 0 && (
             <Chip label={`${running} running`}
-              sx={{ background: 'rgba(56,189,248,0.12)', color: '#38bdf8', fontWeight: 700 }} />
+              sx={{ background: 'rgba(0,150,136,0.1)', color: '#009688', fontWeight: 700 }} />
           )}
           <Button variant="outlined" size="small" startIcon={<BugReportIcon />}
             onClick={() => void handleShowDebug()}
-            sx={{ borderColor: 'rgba(251,191,36,0.3)', color: '#fbbf24', textTransform: 'none' }}>
+            sx={{ borderColor: 'rgba(245,158,11,0.3)', color: '#d97706', textTransform: 'none' }}>
             Diagnostics
           </Button>
           <Button variant="contained" size="small"
             startIcon={polling ? <CircularProgress size={13} color="inherit" /> : <RefreshIcon />}
             disabled={polling} onClick={() => void handlePollNow()}
-            sx={{ background: 'linear-gradient(135deg,#3b82f6,#8b5cf6)', fontWeight: 700, textTransform: 'none' }}>
+            sx={{ background: 'linear-gradient(135deg,#009688,#00796b)', fontWeight: 700, textTransform: 'none' }}>
             {polling ? 'Scanning...' : 'Scan Now'}
           </Button>
         </Box>
@@ -566,19 +630,19 @@ export const ApprovalsPage: React.FC = () => {
 
       {loading ? (
         <Box display="flex" justifyContent="center" mt={8}>
-          <CircularProgress sx={{ color: '#63b3ed' }} />
+          <CircularProgress sx={{ color: '#009688' }} />
         </Box>
       ) : approvals.length === 0 ? (
         <Box textAlign="center" mt={6} p={4}
-          sx={{ border: '1px dashed rgba(99,179,237,0.12)', borderRadius: 2 }}>
-          <Typography variant="h6" color="rgba(148,163,184,0.35)" mb={1}>No approvals yet</Typography>
-          <Typography variant="body2" color="rgba(148,163,184,0.3)" mb={2}>
+          sx={{ border: '1px dashed rgba(0,150,136,0.2)', borderRadius: 2 }}>
+          <Typography variant="h6" color="#9ca3af" mb={1}>No approvals yet</Typography>
+          <Typography variant="body2" color="#9ca3af" mb={2}>
             Commit a <code>config.py</code> file to any GitHub repo root, then click Scan Now.
           </Typography>
           <Button variant="outlined" size="small"
             startIcon={polling ? <CircularProgress size={13} color="inherit" /> : <RefreshIcon />}
             disabled={polling} onClick={() => void handlePollNow()}
-            sx={{ borderColor: 'rgba(99,179,237,0.3)', color: '#63b3ed', textTransform: 'none' }}>
+            sx={{ borderColor: 'rgba(0,150,136,0.3)', color: '#009688', textTransform: 'none' }}>
             {polling ? 'Scanning...' : 'Scan Now'}
           </Button>
         </Box>

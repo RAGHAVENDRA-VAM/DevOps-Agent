@@ -86,12 +86,12 @@ export const PipelinePreviewPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3, maxWidth: 900, mx: 'auto' }}>
-      <Card sx={{ background: 'rgba(13,25,48,0.85)', border: '1px solid rgba(99,179,237,0.18)', borderRadius: 2 }}>
+      <Card sx={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 2 }}>
         <CardContent sx={{ p: 3 }}>
-          <Typography variant="subtitle1" fontWeight={700} color="#e2e8f0" gutterBottom>
+          <Typography variant="subtitle1" fontWeight={700} color="#000000" gutterBottom>
             Pipeline Preview
           </Typography>
-          <Typography variant="body2" color="rgba(148,163,184,0.6)" gutterBottom>
+          <Typography variant="body2" color="#000000" gutterBottom>
             Review the generated CI/CD pipeline. Toggle security stages then click Approve &amp; Generate to commit.
           </Typography>
 
@@ -105,7 +105,7 @@ export const PipelinePreviewPage: React.FC = () => {
                     sx={{ '& .MuiSwitch-thumb': { bgcolor: enableSast ? '#3b82f6' : undefined } }}
                   />
                 }
-                label={<Typography variant="body2" color="#94a3b8">SAST (SonarQube)</Typography>}
+                label={<Typography variant="body2" color="#000000">SAST (SonarQube)</Typography>}
               />
               <FormControlLabel
                 control={
@@ -115,14 +115,14 @@ export const PipelinePreviewPage: React.FC = () => {
                     sx={{ '& .MuiSwitch-thumb': { bgcolor: enableDast ? '#8b5cf6' : undefined } }}
                   />
                 }
-                label={<Typography variant="body2" color="#94a3b8">DAST (OWASP ZAP)</Typography>}
+                label={<Typography variant="body2" color="#000000">DAST (OWASP ZAP)</Typography>}
               />
             </Box>
 
             {success ? (
               <Box display="flex" alignItems="center" gap={1}>
                 <CheckCircleIcon sx={{ color: '#34d399', fontSize: 20 }} />
-                <Typography variant="body2" color="#34d399" fontWeight={600}>
+                <Typography variant="body2" color="#16a34a" fontWeight={600}>
                   Pipeline committed — redirecting…
                 </Typography>
               </Box>
@@ -133,10 +133,10 @@ export const PipelinePreviewPage: React.FC = () => {
                 disabled={creating || loading || !yaml}
                 startIcon={creating ? <CircularProgress size={14} color="inherit" /> : undefined}
                 sx={{
-                  background: 'linear-gradient(135deg,#3b82f6,#8b5cf6)',
+                  background: 'linear-gradient(135deg,#009688,#00796b)',
                   fontWeight: 700,
                   textTransform: 'none',
-                  '&:disabled': { background: 'rgba(99,179,237,0.1)', color: 'rgba(148,163,184,0.3)' },
+                  '&:disabled': { background: '#e5e7eb', color: '#9ca3af' },
                 }}
               >
                 {creating ? 'Committing…' : 'Approve & Generate'}

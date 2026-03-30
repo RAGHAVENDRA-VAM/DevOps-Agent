@@ -29,10 +29,10 @@ interface DoraMetrics {
 }
 
 const BAND_COLOR: Record<Band, { color: string; bg: string }> = {
-  elite:  { color: '#34d399', bg: 'rgba(52,211,153,0.12)'  },
-  high:   { color: '#63b3ed', bg: 'rgba(99,179,237,0.12)'  },
-  medium: { color: '#fbbf24', bg: 'rgba(251,191,36,0.12)'  },
-  low:    { color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
+  elite:  { color: '#16a34a', bg: 'rgba(34,197,94,0.1)'   },
+  high:   { color: '#00897b', bg: 'rgba(0,150,136,0.1)'   },
+  medium: { color: '#d97706', bg: 'rgba(245,158,11,0.1)'  },
+  low:    { color: '#dc2626', bg: 'rgba(239,68,68,0.08)'  },
 };
 
 interface MetricCardProps {
@@ -49,7 +49,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, band, description, dataP
   return (
     <Box className="dash-metric-card" sx={{ p: 2.5, borderRadius: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-        <Typography variant="subtitle1" fontWeight={600} color="#e2e8f0">
+        <Typography variant="subtitle1" fontWeight={600} color="#1a202c">
           {title}
         </Typography>
         <Chip
@@ -60,14 +60,14 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, band, description, dataP
       </Box>
       {dataPoints > 0 ? (
         <Typography variant="h5" fontWeight={700} color={color} mb={0.5}>
-          {latestValue} <Typography component="span" variant="caption" color="rgba(148,163,184,0.6)">{unit}</Typography>
+          {latestValue} <Typography component="span" variant="caption" color="#6b7280">{unit}</Typography>
         </Typography>
       ) : (
-        <Typography variant="body2" color="rgba(148,163,184,0.4)" mb={0.5} fontStyle="italic">
+        <Typography variant="body2" color="#9ca3af" mb={0.5} fontStyle="italic">
           No data yet
         </Typography>
       )}
-      <Typography variant="body2" color="rgba(148,163,184,0.6)" fontSize={12}>
+      <Typography variant="body2" color="#6b7280" fontSize={12}>
         {description}
       </Typography>
     </Box>
@@ -137,7 +137,7 @@ export const DoraDashboardPage: React.FC = () => {
 
           {loading && !metrics ? (
             <Box display="flex" justifyContent="center" mt={6}>
-              <CircularProgress sx={{ color: '#63b3ed' }} />
+              <CircularProgress sx={{ color: '#009688' }} />
             </Box>
           ) : (
             <Grid container spacing={3} mt={1}>
@@ -185,7 +185,7 @@ export const DoraDashboardPage: React.FC = () => {
           )}
 
           {metrics && metrics.deployment_frequency.length === 0 && (
-            <Alert severity="info" sx={{ mt: 3, bgcolor: 'rgba(59,130,246,0.08)', color: '#93c5fd', border: '1px solid rgba(59,130,246,0.2)' }}>
+            <Alert severity="info" sx={{ mt: 3, bgcolor: 'rgba(0,150,136,0.06)', color: '#00695c', border: '1px solid rgba(0,150,136,0.2)' }}>
               No deployment data yet. Approve and run pipelines to start collecting DORA metrics.
             </Alert>
           )}

@@ -24,11 +24,11 @@ import '../styles/DashboardPages.css';
 type DeployStatus = 'success' | 'failed' | 'running' | 'pending' | 'rejected';
 
 const STATUS_STYLE: Record<DeployStatus, { bgcolor: string; color: string; border: string }> = {
-  success:  { bgcolor: 'rgba(16,185,129,0.1)',  color: '#34d399', border: '1px solid rgba(16,185,129,0.2)'  },
-  failed:   { bgcolor: 'rgba(239,68,68,0.1)',   color: '#f87171', border: '1px solid rgba(239,68,68,0.2)'   },
-  running:  { bgcolor: 'rgba(245,158,11,0.1)',  color: '#fcd34d', border: '1px solid rgba(245,158,11,0.2)'  },
-  pending:  { bgcolor: 'rgba(99,179,237,0.1)',  color: '#63b3ed', border: '1px solid rgba(99,179,237,0.2)'  },
-  rejected: { bgcolor: 'rgba(148,163,184,0.1)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.2)' },
+  success:  { bgcolor: 'rgba(34,197,94,0.1)',   color: '#16a34a', border: '1px solid rgba(34,197,94,0.25)'   },
+  failed:   { bgcolor: 'rgba(239,68,68,0.08)',  color: '#dc2626', border: '1px solid rgba(239,68,68,0.2)'    },
+  running:  { bgcolor: 'rgba(245,158,11,0.1)',  color: '#d97706', border: '1px solid rgba(245,158,11,0.25)'  },
+  pending:  { bgcolor: 'rgba(0,150,136,0.1)',   color: '#00897b', border: '1px solid rgba(0,150,136,0.25)'   },
+  rejected: { bgcolor: 'rgba(107,114,128,0.1)', color: '#6b7280', border: '1px solid rgba(107,114,128,0.2)' },
 };
 
 function statusLabel(status: string): DeployStatus {
@@ -98,7 +98,7 @@ export const DeploymentDashboardPage: React.FC = () => {
 
           {loading && approvals.length === 0 ? (
             <Box display="flex" justifyContent="center" mt={6}>
-              <CircularProgress sx={{ color: '#63b3ed' }} />
+              <CircularProgress sx={{ color: '#009688' }} />
             </Box>
           ) : (
             <Box mt={2} sx={{ overflowX: 'auto' }}>
@@ -117,7 +117,7 @@ export const DeploymentDashboardPage: React.FC = () => {
                   {approvals.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6}>
-                        <Typography variant="body2" color="rgba(148,163,184,0.5)" py={4} textAlign="center">
+                        <Typography variant="body2" color="#9ca3af" py={4} textAlign="center">
                           No deployments yet. Approve a pipeline from the Approvals page to see status here.
                         </Typography>
                       </TableCell>
@@ -129,18 +129,18 @@ export const DeploymentDashboardPage: React.FC = () => {
                       return (
                         <TableRow key={row.id} className="dash-table-row">
                           <TableCell>
-                            <Typography variant="body2" fontWeight={600} color="#e2e8f0">{row.repo}</Typography>
+                            <Typography variant="body2" fontWeight={600} color="#1a202c">{row.repo}</Typography>
                           </TableCell>
                           <TableCell>
-                            <Chip label={row.branch} size="small" sx={{ bgcolor: 'rgba(99,179,237,0.1)', color: '#63b3ed', border: '1px solid rgba(99,179,237,0.2)', fontSize: 11 }} />
+                            <Chip label={row.branch} size="small" sx={{ bgcolor: 'rgba(0,150,136,0.1)', color: '#00897b', border: '1px solid rgba(0,150,136,0.2)', fontSize: 11 }} />
                           </TableCell>
                           <TableCell>
-                            <Typography variant="caption" color="rgba(148,163,184,0.6)" fontFamily="monospace">
+                            <Typography variant="caption" color="#6b7280" fontFamily="monospace">
                               {row.commit_sha}
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2" color="rgba(148,163,184,0.7)">
+                            <Typography variant="body2" color="#6b7280">
                               {(row.config.DEPLOY_TARGET as string | undefined) ?? '—'}
                             </Typography>
                           </TableCell>
@@ -153,12 +153,12 @@ export const DeploymentDashboardPage: React.FC = () => {
                                 href={row.deployed_url.startsWith('http') ? row.deployed_url : `https://${row.deployed_url}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                sx={{ color: '#63b3ed', display: 'flex', alignItems: 'center', gap: 0.5, fontSize: 13 }}
+                                sx={{ color: '#00897b', display: 'flex', alignItems: 'center', gap: 0.5, fontSize: 13 }}
                               >
                                 Open <OpenInNewIcon sx={{ fontSize: 13 }} />
                               </Link>
                             ) : (
-                              <Typography variant="caption" color="rgba(148,163,184,0.4)">—</Typography>
+                              <Typography variant="caption" color="#9ca3af">—</Typography>
                             )}
                           </TableCell>
                         </TableRow>

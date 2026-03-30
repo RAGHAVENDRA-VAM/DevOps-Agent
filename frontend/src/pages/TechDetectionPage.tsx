@@ -111,13 +111,13 @@ export const TechDetectionPage: React.FC = () => {
             <Box
               key={i}
               className="tech-step-row"
-              sx={{ borderBottom: i < steps.length - 1 ? '1px solid rgba(99,179,237,0.07)' : 'none' }}
+              sx={{ borderBottom: i < steps.length - 1 ? '1px solid #e5e7eb' : 'none' }}
             >
               <Box className={stepIconClass(step.status)}>
-                {step.status === 'running' && <CircularProgress size={14} sx={{ color: '#63b3ed' }} />}
-                {step.status === 'done'    && <CheckCircleIcon sx={{ fontSize: 16, color: '#10b981' }} />}
+                {step.status === 'running' && <CircularProgress size={14} sx={{ color: '#009688' }} />}
+                {step.status === 'done'    && <CheckCircleIcon sx={{ fontSize: 16, color: '#16a34a' }} />}
                 {step.status === 'pending' && (
-                  <Typography variant="caption" color="rgba(148,163,184,0.4)" fontWeight={700}>
+                  <Typography variant="caption" color="#9ca3af" fontWeight={700}>
                     {i + 1}
                   </Typography>
                 )}
@@ -183,10 +183,10 @@ export const TechDetectionPage: React.FC = () => {
         <Box className="tech-toast-box">
           <CheckCircleIcon sx={{ color: '#10b981', fontSize: 22 }} />
           <Box>
-            <Typography fontWeight={700} color="#ecfdf5" fontSize={14}>
+            <Typography fontWeight={700} color="#000000" fontSize={14}>
               Pipeline Created Successfully!
             </Typography>
-            <Typography variant="caption" color="rgba(167,243,208,0.8)">
+            <Typography variant="caption" color="#000000">
               CI/CD workflow committed to your repository
             </Typography>
           </Box>

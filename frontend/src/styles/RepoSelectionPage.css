@@ -1,39 +1,28 @@
 /* RepoSelectionPage.css */
-
 .repo-root {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0e1a 0%, #0d1b2a 100%);
-  padding: 32px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #eef2ff 100%);
+  padding: 24px;
 }
-
-.repo-header {
-  margin-bottom: 32px;
-}
-
-.repo-title {
-  font-weight: 700 !important;
-  color: #e2e8f0 !important;
-}
-
-.repo-subtitle {
-  color: rgba(148,163,184,0.7) !important;
-}
+.repo-header { margin-bottom: 24px; }
+.repo-title { font-weight: 700 !important; color: #000000 !important; }
+.repo-subtitle { color: #000000 !important; }
 
 /* Search bar */
-.repo-search .MuiOutlinedInput-root {
-  color: #e2e8f0;
-  background: rgba(255,255,255,0.04);
+.repo-search .MuiOutlinedInput-root { color: #000000; background: #ffffff; }
+.repo-search .MuiOutlinedInput-root fieldset { border-color: #d1d5db; }
+.repo-search .MuiOutlinedInput-root:hover fieldset { border-color: #009688; }
+.repo-search .MuiOutlinedInput-root.Mui-focused fieldset {
+  border-color: #009688;
+  box-shadow: 0 0 0 3px rgba(0,150,136,0.15);
 }
-.repo-search .MuiOutlinedInput-root fieldset { border-color: rgba(99,179,237,0.2); }
-.repo-search .MuiOutlinedInput-root:hover fieldset { border-color: rgba(99,179,237,0.4); }
-.repo-search .MuiOutlinedInput-root.Mui-focused fieldset { border-color: #63b3ed; }
-.repo-search input::placeholder { color: rgba(148,163,184,0.4); }
+.repo-search input::placeholder { color: #9ca3af; }
 
 /* Count chip */
 .repo-count-chip {
-  background: rgba(99,179,237,0.1) !important;
-  color: #63b3ed !important;
-  border: 1px solid rgba(99,179,237,0.2) !important;
+  background: rgba(0,150,136,0.1) !important;
+  color: #00897b !important;
+  border: 1px solid rgba(0,150,136,0.25) !important;
 }
 
 /* Grid */
@@ -47,57 +36,54 @@
 }
 .repo-grid::-webkit-scrollbar { width: 6px; }
 .repo-grid::-webkit-scrollbar-track { background: transparent; }
-.repo-grid::-webkit-scrollbar-thumb { background: rgba(99,179,237,0.3); border-radius: 3px; }
+.repo-grid::-webkit-scrollbar-thumb { background: rgba(0,150,136,0.3); border-radius: 3px; }
 
 /* Repo card */
 .repo-card {
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid rgba(99,179,237,0.12);
-  background: rgba(13,25,48,0.8);
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
-  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 .repo-card:hover {
-  border-color: rgba(99,179,237,0.4);
-  background: rgba(99,179,237,0.06);
+  border-color: #009688;
+  background: rgba(0,150,136,0.02);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
 }
 .repo-card.selected {
-  border-color: rgba(99,179,237,0.6);
-  background: rgba(99,179,237,0.08);
+  border-color: #00897b;
+  background: rgba(0,150,136,0.04);
+  box-shadow: 0 0 0 2px rgba(0,150,136,0.2);
 }
 
 /* Repo avatar */
 .repo-avatar {
-  background: rgba(99,179,237,0.1) !important;
+  background: rgba(0,150,136,0.1) !important;
   width: 36px !important;
   height: 36px !important;
+  color: #00897b !important;
 }
 
 /* Language dot */
-.repo-lang-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-}
+.repo-lang-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 
-/* Private / Public chip */
+/* Badges */
 .repo-badge-public {
   height: 18px !important;
   font-size: 10px !important;
-  background: rgba(16,185,129,0.1) !important;
-  color: #34d399 !important;
-  border: 1px solid rgba(16,185,129,0.2) !important;
+  background: rgba(34,197,94,0.1) !important;
+  color: #16a34a !important;
+  border: 1px solid rgba(34,197,94,0.25) !important;
 }
 .repo-badge-private {
   height: 18px !important;
   font-size: 10px !important;
-  background: rgba(239,68,68,0.1) !important;
-  color: #f87171 !important;
+  background: rgba(239,68,68,0.08) !important;
+  color: #dc2626 !important;
   border: 1px solid rgba(239,68,68,0.2) !important;
 }
 
@@ -105,6 +91,6 @@
 .repo-empty {
   grid-column: 1 / -1;
   text-align: center;
-  padding: 64px 0;
-  color: rgba(148,163,184,0.5);
+  padding: 32px 0;
+  color: #000000;
 }
