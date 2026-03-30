@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, CheckConstraint, DateTime, JSON
 from datetime import datetime
-from app.database.database import Base
+from app.db import Base
 
 class Repo_status(Base):
     __tablename__ = "repo_status"

@@ -16,13 +16,13 @@ class Repo_response(BaseModel):
 
     repo : str
     branch : str
-    infrastructure : dict
     status : Literal['pending', 'approved']
     commit_sha : str
     commit_message : str
     committed_by: str
     committed_at: datetime
     changed_files: list
+    config: dict
     # provision_response : dict
     # techstack : dict
 
@@ -69,15 +69,39 @@ async def get_all_details(db: db_dependency):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"An error occurred: {str(e)}")
 
+@router.get("/get_details/{id}")
+async def get_repo_details(id: str, db: db_dependency):
+    result = await db.execute(select(Approval).where(Approval.id == id))
+    repo = result.scalar_one_or_none()
+    if repo is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
+    return repo
+
+async def save_approval(repo: Repo_response) -> Approval:
+    import uuid, time  # noqa: PLC0415
+    new_repo = Approval(
+        id=str(uuid.uuid4()),
+        created_at=time.time(),
+        detected_tech={},
+        pipeline_stage=0,
+        stage_logs={},
+        logs=[],
+        terraform_url=None,
+        deployed_url=None,
+        actions_run_url=None,
+        **repo.dict(),
+    )
+    async with AsyncSessionLocal() as db:
+        db.add(new_repo)
+        await db.commit()
+        await db.refresh(new_repo)
+    return new_repo
+
 
 @router.post("/add_details")
 async def add_repo_details(repo: Repo_response, db: db_dependency):
     try:
-        new_repo = Approval(**repo.dict())
-        db.add(new_repo)
-        await db.commit()
-        await db.refresh(new_repo)
-        return new_repo
+        return await save_approval(repo)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"An error occurred: {str(e)}")
 

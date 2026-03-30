@@ -8,6 +8,9 @@ from sqlalchemy.orm import DeclarativeBase, Session
 from sqlalchemy.orm import  DeclarativeBase
 from fastapi import Depends #type: ignore
 from typing import Annotated
+from dotenv import load_dotenv
+
+load_dotenv()
 
 _DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./devops_agent.db")
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
+from datetime import datetime
 
-from sqlalchemy import JSON, Float, Integer, String, Text
+from sqlalchemy import JSON, DateTime, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -15,7 +16,7 @@ class Approval(Base):
     commit_sha: Mapped[str] = mapped_column(String(40), nullable=False)
     commit_message: Mapped[str] = mapped_column(Text, default="")
     committed_by: Mapped[str] = mapped_column(String(255), default="")
-    committed_at: Mapped[str] = mapped_column(String(50), default="")
+    committed_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     changed_files: Mapped[list] = mapped_column(JSON, default=list)
 
     # Config parsed from config.py in the repo

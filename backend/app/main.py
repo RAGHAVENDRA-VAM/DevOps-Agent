@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router as api_router
 from app.api.v1.approvals import start_poller
-from app.config import get_settings, load_env
+from app.config import get_settings
 from app.db import create_tables
 
 logging.basicConfig(
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
-    load_env()
+
     settings = get_settings()
     await create_tables()
     logger.info("DevOps Agent Platform starting up")
