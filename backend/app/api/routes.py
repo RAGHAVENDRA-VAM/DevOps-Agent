@@ -11,6 +11,8 @@ from app.api.v1 import (
     pipelines,
     security,
     webhook,
+    sql,
+    hook,
 )
 
 router = APIRouter()
@@ -25,3 +27,5 @@ router.include_router(infrastructure.router,  prefix="/infrastructure", tags=["i
 router.include_router(builds.router,          prefix="/builds",         tags=["builds"])
 router.include_router(approvals.router,       prefix="/approvals",      tags=["approvals"])
 router.include_router(webhook.router,         prefix="/webhooks",       tags=["webhooks"])
+router.include_router(sql.router,             prefix="/sql",            tags=["sql"])
+router.include_router(hook.router,            prefix="/hook",           tags=["hook"])

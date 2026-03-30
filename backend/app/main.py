@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router as api_router
 from app.api.v1.approvals import start_poller
-from app.config import get_settings, load_env
+from app.config import get_settings
 from app.db import create_tables
 
 logging.basicConfig(
@@ -23,15 +23,16 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
-    load_env()
+
     settings = get_settings()
     await create_tables()
     logger.info("DevOps Agent Platform starting up")
     token_preview = (settings.github_pat[:12] + "...") if settings.github_pat else "NOT SET"
     logger.info("GITHUB_PERSONAL_ACCESS_TOKEN loaded: %s", token_preview)
-    poller_task = asyncio.create_task(start_poller())
+    poller_task = asyncio.create_task(start_poller()) if os.getenv("ENABLE_POLLER", "true").lower() == "true" else None
     yield
-    poller_task.cancel()
+    if poller_task:
+        poller_task.cancel()
     logger.info("DevOps Agent Platform shutting down")
 
 

@@ -53,6 +53,9 @@ _SEEN_SHAS: dict[str, str] = {}
 # SSE subscribers: approval_id → list[asyncio.Queue]
 _SUBSCRIBERS: dict[str, list[asyncio.Queue]] = {}
 
+# Poller control flag
+_POLLER_ENABLED: bool = True
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -161,15 +164,17 @@ async def _push_stage_event(approval_id: str, stage: int, severity: str, message
 # ---------------------------------------------------------------------------
 
 async def start_poller() -> None:
+    global _POLLER_ENABLED
     from app.config import get_settings  # noqa: PLC0415
     interval = get_settings().approval_poll_interval
     logger.info("Approval poller started (interval=%ds)", interval)
-    while True:
+    while _POLLER_ENABLED:
         try:
             await _poll_once()
         except Exception as exc:  # noqa: BLE001
             logger.warning("Poller error (will retry): %s", exc)
         await asyncio.sleep(interval)
+    logger.info("Approval poller stopped")
 
 
 async def _poll_once() -> None:
@@ -281,6 +286,27 @@ async def _check_repo(repo: str, branch: str, token: str) -> None:
 # ---------------------------------------------------------------------------
 # Manual poll trigger + debug endpoints
 # ---------------------------------------------------------------------------
+
+@router.post("/poller/stop")
+async def stop_poller(gh_token: str | None = Cookie(default=None)) -> dict:
+    if not gh_token:
+        raise HTTPException(status_code=401, detail="Not authenticated.")
+    global _POLLER_ENABLED
+    _POLLER_ENABLED = False
+    logger.info("Approval poller stop requested")
+    return {"status": "stopped"}
+
+
+@router.post("/poller/start")
+async def resume_poller(gh_token: str | None = Cookie(default=None)) -> dict:
+    if not gh_token:
+        raise HTTPException(status_code=401, detail="Not authenticated.")
+    global _POLLER_ENABLED
+    _POLLER_ENABLED = True
+    asyncio.create_task(start_poller())
+    logger.info("Approval poller restarted")
+    return {"status": "started"}
+
 
 @router.post("/poll-now")
 async def poll_now(gh_token: str | None = Cookie(default=None)) -> dict:

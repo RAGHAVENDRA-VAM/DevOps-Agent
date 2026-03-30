@@ -6,10 +6,12 @@ from functools import lru_cache
 
 from dotenv import load_dotenv
 
+load_dotenv()  # load .env immediately so os.getenv calls in AppSettings see the values
+
 
 def load_env() -> None:
-    """Load .env for local development. Does not override already-set env vars."""
-    load_dotenv()
+    """No-op kept for backwards compatibility — .env is loaded at module import."""
+    pass
 
 
 def get_required_env(name: str) -> str:
